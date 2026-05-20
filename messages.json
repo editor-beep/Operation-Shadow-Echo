@@ -1,0 +1,41 @@
+{
+  "boot": [
+    "<span style='color:#ff0000'>[LEVEL 7 CLEARANCE GRANTED]</span>",
+    "They told you these were just theories.",
+    "Welcome to the real world."
+  ],
+  "choices": {
+    "1": { "label": "MKULTRA + ST. LOUIS POISONING", "logs": [
+      "<span style='color:#ff9900'>[MKULTRA + ST. LOUIS]</span>",
+      "They sprayed radioactive particles over St. Louis in 1953-54. LSD dosing, trauma programming. Never stopped."
+    ]},
+    "2": { "label": "PROJECT MONARCH FILES", "logs": [
+      "<span style='color:#ff00ff'>[PROJECT MONARCH]</span>",
+      "Trauma-based mind control. Butterfly triggers in media and celebrities."
+    ]},
+    "3": { "label": "PROJECT BLUE BEAM", "logs": [
+      "<span style='color:#00ddff'>[PROJECT BLUE BEAM]</span>",
+      "Holographic false flags. Fake alien invasion or second coming."
+    ]},
+    "4": { "label": "ST. LOUIS ARCHIVES", "logs": [
+      "<span style='color:#ff8800'>[ST. LOUIS ARCHIVES]</span>",
+      "Radioactive spraying on civilians. Cancer clusters followed."
+    ]},
+    "6": { "label": "CHEMTRAILS & SMART DUST", "logs": [
+      "Smart dust + heavy metals falling daily."
+    ]},
+    "5": { "label": "CHAT WITH HANDLER", "handlerResponses": [
+      "Handler: You're starting to wake up...",
+      "Handler: Monarch runs deeper than you can imagine.",
+      "Handler: Blue Beam is already in testing.",
+      "Handler: They poisoned St. Louis... and laughed."
+    ]},
+    "7": { "label": "FINAL TRANSMISSION", "end": true }
+  },
+  "randomParanoia": [
+    "Phone vibrated with no notification.",
+    "Birds suddenly went silent.",
+    "You heard your name in the static.",
+    "A black SUV just drove by slowly."
+  ]
+}
