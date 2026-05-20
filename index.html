@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OPERATION: SHADOW ECHO v3.2 • BLACK PROTOCOL</title>
+    <title>OPERATION: SHADOW ECHO v3.2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
         
@@ -12,8 +12,8 @@
             background: #020202;
             color: #00aa00;
             font-family: 'VT323', monospace;
-            overflow: hidden;
             height: 100vh;
+            overflow: hidden;
         }
         
         .scanlines {
@@ -24,112 +24,95 @@
         }
 
         .container { display: flex; height: 100vh; flex-direction: column; }
-        .sidebar { background: #050505; border-bottom: 3px solid #880000; padding: 10px 15px; flex-shrink: 0; }
-        .main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         
-        header { text-align: center; border-bottom: 3px solid #880000; padding: 8px; background: #050505; }
-        h1 { margin: 0; font-size: 2.3em; letter-spacing: 5px; animation: glitch 1.4s infinite; color: #cc0000; text-shadow: 0 0 25px #880000; }
+        .header-area {
+            background: #050505;
+            border-bottom: 3px solid #880000;
+            padding: 6px 10px;
+            flex-shrink: 0;
+        }
+        
+        h1 { 
+            margin: 0; 
+            font-size: 2em; 
+            text-align: center;
+            color: #cc0000; 
+            text-shadow: 0 0 20px #880000;
+            animation: glitch 1.4s infinite;
+        }
         
         .terminal {
             flex: 1;
             background: #000;
             border: 3px solid #660000;
-            margin: 8px;
-            padding: 25px;
+            margin: 6px;
+            padding: 18px;
             overflow-y: auto;
-            box-shadow: 0 0 35px #220000 inset;
-            font-size: 1.85rem;
-            line-height: 1.5;
+            box-shadow: 0 0 30px #220000 inset;
+            font-size: 2.05rem;           /* Bigger text */
+            line-height: 1.4;
+            min-height: 0;
         }
         
-        .redacted { color: #ff2222; text-decoration: line-through wavy; animation: redacted-flicker 280ms infinite; }
+        .log p { margin: 10px 0; }
         
         .input-area {
-            padding: 12px 15px;
+            padding: 8px 10px;
             background: #050505;
             border-top: 3px solid #880000;
             flex-shrink: 0;
+            max-height: 45vh;             /* Limit button area */
+            overflow-y: auto;
         }
         
         button {
-            background: #0a0a0a; color: #00bb00; border: 2px solid #660000;
-            padding: 18px 20px; margin: 6px 0; font-size: 1.3rem;
-            width: 100%; text-align: left; cursor: pointer;
+            background: #0a0a0a; 
+            color: #00bb00; 
+            border: 2px solid #660000;
+            padding: 13px 16px; 
+            margin: 4px 0; 
+            font-size: 1.18rem;
+            width: 100%; 
+            text-align: left; 
+            cursor: pointer;
         }
-        button:hover { background: #330000; color: #ff4444; border-color: #aa0000; }
+        
+        button:hover { background: #330000; color: #ff4444; }
 
         .status-bar {
-            position: fixed; top: 8px; right: 8px;
-            background: rgba(40,0,0,0.97); padding: 6px 14px;
-            border: 1px solid #aa0000; color: #ff7777; z-index: 10000;
+            position: fixed; top: 6px; right: 6px; z-index: 10000;
+            background: rgba(40,0,0,0.95); padding: 4px 10px;
+            border: 1px solid #aa0000; color: #ff7777; font-size: 0.85rem;
         }
 
-        #doc-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
-            display: none; align-items: center; justify-content: center; z-index: 10001;
-        }
-        #doc-content {
-            background: #0a0a0a; border: 4px solid #880000;
-            max-width: 92%; max-height: 88%; overflow-y: auto;
-            padding: 30px; color: #ffdddd; font-size: 1.45rem;
-            box-shadow: 0 0 40px #440000; position: relative;
-        }
-        .doc-title { color: #ff0000; font-size: 2.1rem; text-align: center; margin-bottom: 25px; }
-        .close-btn {
-            position: absolute; top: 20px; right: 20px;
-            background: #330000; color: #ff8888; border: 2px solid #880000;
-            padding: 10px 20px; cursor: pointer;
-        }
-
-        @keyframes glitch { 0%,100% { transform: translate(0); } 20% { transform: translate(-4px, 3px); } 40% { transform: translate(4px, -3px); } }
-        @keyframes redacted-flicker { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
+        @keyframes glitch { 0%,100% { transform: translate(0); } 20% { transform: translate(-3px,2px); } 40% { transform: translate(3px,-2px); } }
         
         @media (max-width: 768px) {
-            .terminal { font-size: 1.65rem; padding: 18px; }
-            button { font-size: 1.25rem; }
+            .terminal { font-size: 1.85rem; padding: 14px; }
+            button { font-size: 1.15rem; padding: 12px 14px; }
+            h1 { font-size: 1.85em; }
         }
     </style>
 </head>
 <body>
     <div class="scanlines"></div>
-    <div class="status-bar" id="status">MKULTRA ACTIVE • SANITY: <span id="sanity">83</span>% • TARGET #7743921</div>
+    <div class="status-bar" id="status">SANITY: <span id="sanity">83</span>% • TARGET #7743921</div>
     
     <div class="container">
-        <div class="sidebar">
-            <strong style="color:#ff6600;">COLLECTED EVIDENCE</strong><br>
-            <div id="evidence-list" style="margin:8px 0; color:#cc8800; line-height:1.45;"></div>
-            
-            <strong style="color:#ff00aa; display:block; margin-top:15px;">HANDLER STATUS</strong>
-            <span id="handler" style="color:#ff4477;">CONNECTED • MONITORING</span>
+        <div class="header-area">
+            <h1>SHADOW ECHO v3.2</h1>
+            <p style="text-align:center; color:#990000; margin:4px 0 0 0; font-size:1.1rem;">ALL OF IT IS REAL.</p>
         </div>
         
-        <div class="main">
-            <header>
-                <h1>SHADOW ECHO v3.2</h1>
-                <p style="color:#990000;">ALL OF IT IS REAL. SIMULTANEOUSLY.</p>
-            </header>
-            
-            <div class="terminal" id="terminal">
-                <div class="log" id="log"></div>
-            </div>
-            
-            <div class="input-area" id="choices"></div>
+        <div class="terminal" id="terminal">
+            <div class="log" id="log"></div>
         </div>
-    </div>
-
-    <div id="doc-modal">
-        <div id="doc-content">
-            <div class="close-btn" onclick="closeDocument()">CLOSE FILE [X]</div>
-            <div id="doc-title" class="doc-title"></div>
-            <div id="doc-body"></div>
-        </div>
+        
+        <div class="input-area" id="choices"></div>
     </div>
 
     <script>
         let sanity = 83;
-        let evidence = [];
-        let handlerResponses = 0;
-
         const log = document.getElementById('log');
         const choicesDiv = document.getElementById('choices');
 
@@ -139,106 +122,11 @@
             p.style.color = color;
             log.appendChild(p);
             log.scrollTop = log.scrollHeight;
-            if (Math.random() > 0.6) setTimeout(() => p.classList.add('redacted'), 600 + Math.random() * 1400);
         }
 
         function updateStatus() {
             sanity = Math.max(0, sanity - 1);
             document.getElementById('sanity').textContent = sanity;
-            if (sanity < 35) document.getElementById('status').style.color = '#ff0000';
-        }
-
-        function addEvidence(item) {
-            if (!evidence.includes(item)) {
-                evidence.push(item);
-                document.getElementById('evidence-list').innerHTML = evidence.map(e => `• ${e}`).join('<br>');
-            }
-        }
-
-        function showDocument(key) {
-            const docs = {
-                monarch: { 
-                    title: "PROJECT MONARCH - OMEGA CLEARANCE", 
-                    content: ["[CIA INTERNAL MEMO — EYES ONLY]", "Successful creation of programmable alters through trauma.", "Butterfly triggers confirmed in media and politics."] 
-                }
-            };
-            const doc = docs[key] || docs.monarch;
-            document.getElementById('doc-title').innerHTML = doc.title;
-            document.getElementById('doc-body').innerHTML = doc.content.map(line => `<p>${line}</p>`).join('');
-            document.getElementById('doc-modal').style.display = 'flex';
-        }
-
-        function closeDocument() {
-            document.getElementById('doc-modal').style.display = 'none';
-        }
-
-        function makeChoice(id) {
-            updateStatus();
-
-            if (id === "1") {
-                addLog("<span style='color:#ff9900'>[MKULTRA + ST. LOUIS]</span>", "#ff9900");
-                addLog("They sprayed radioactive particles over St. Louis in 1953-54. Never stopped.");
-                addEvidence("MKULTRA");
-            } else if (id === "2") {
-                addLog("<span style='color:#ff00ff'>[PROJECT MONARCH]</span>", "#ff00ff");
-                addLog("Trauma-based mind control. Butterfly triggers everywhere.");
-                addEvidence("MONARCH");
-            } else if (id === "3") {
-                addLog("<span style='color:#00ddff'>[PROJECT BLUE BEAM]</span>", "#00ddff");
-                addLog("Holographic false flags. The sky is their screen.");
-                addEvidence("BLUE BEAM");
-            } else if (id === "4") {
-                addLog("<span style='color:#ff8800'>[ST. LOUIS ARCHIVES]</span>", "#ff8800");
-                addLog("Radioactive spraying on civilians. Cancer clusters followed.");
-                addEvidence("ST. LOUIS");
-            } else if (id === "5") {
-                handlerChat();
-                return;
-            } else if (id === "6") {
-                addLog("Smart dust + heavy metals falling daily.");
-                addEvidence("CHEMTRAILS");
-            } else if (id === "7") {
-                showDocument("monarch");
-                return;
-            } else if (id === "9") {
-                addLog("<span style='color:#ff8800'>[CONTINGENCY PLAN ACTIVATED]</span>", "#ff8800");
-                addLog("You begin planning the removal of the current CIA Director...");
-                sanity = Math.min(100, sanity + 28);
-                addLog("SANITY RECOVERED (+28)", "#00ff88");
-            } else if (id === "8") {
-                endGame();
-                return;
-            }
-
-            if (Math.random() > 0.5) {
-                const paranoia = ["Phone vibrated with no notification.", "Birds suddenly went silent.", "You heard your name in the static."];
-                addLog(paranoia[Math.floor(Math.random() * paranoia.length)], "#ff6666");
-            }
-            refreshChoices();
-            checkSleeperMode();
-        }
-
-        function handlerChat() {
-            handlerResponses++;
-            const msgs = ["Handler: You're starting to wake up...", "Handler: Monarch runs deeper than you can imagine.", "Handler: Blue Beam is already in testing."];
-            addLog(msgs[handlerResponses % msgs.length], "#ff4488");
-            if (handlerResponses >= 5) sanity = Math.max(0, sanity - 35);
-            refreshChoices();
-            checkSleeperMode();
-        }
-
-        function checkSleeperMode() {
-            if (sanity <= 0) {
-                addLog("<span style='color:#ff0000;font-size:2.1rem'>SLEEPER PROTOCOL ENGAGED</span>", "#ff0000");
-                setTimeout(() => {
-                    document.body.innerHTML = `
-                    <div style="position:fixed;inset:0;background:#000;color:#ff0000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
-                        <h1 style="font-size:3.2em;animation:glitch 120ms infinite;">SLEEPER PROTOCOL ACTIVATED</h1>
-                        <p style="font-size:1.9em;margin:30px 0;">NEW TARGET: THE PRESIDENT</p>
-                        <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT ASSET</button>
-                    </div>`;
-                }, 1800);
-            }
         }
 
         function refreshChoices() {
@@ -249,41 +137,26 @@
                 <button onclick="makeChoice(4)">ST. LOUIS ARCHIVES</button>
                 <button onclick="makeChoice(6)">CHEMTRAILS & SMART DUST</button>
                 <button onclick="makeChoice(5)">CHAT WITH HANDLER</button>
-                <button onclick="makeChoice(7)">VIEW LEAKED DOCUMENTS</button>
                 <button onclick="makeChoice(9)">PLAN CIA DIRECTOR ASSASSINATION</button>
-                <button onclick="makeChoice(8)" style="color:#ff3333;margin-top:12px">FINAL TRANSMISSION</button>
+                <button onclick="makeChoice(8)" style="color:#ff4444">FINAL TRANSMISSION</button>
             `;
         }
 
-        function endGame() {
-            addLog("<span style='color:#ff0000;font-size:1.8em'>FINAL TRANSMISSION INITIATED</span>", "#ff0000");
-            setTimeout(() => {
-                document.body.innerHTML = `
-                <div style="position:fixed;inset:0;background:#000;color:#ff2222;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
-                    <h1 style="font-size:3em;animation:glitch 150ms infinite;">YOU WERE THE EXPERIMENT</h1>
-                    <p style="font-size:1.8em;margin:40px 0;">THANK YOU FOR YOUR COMPLIANCE, ASSET.</p>
-                    <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT CONSCIOUSNESS</button>
-                </div>`;
-            }, 1400);
+        function makeChoice(id) {
+            updateStatus();
+            addLog("Signal received...", "#00dd00");
+            // Add your full logic here later
+            refreshChoices();
         }
 
-        function boot() {
+        window.onload = () => {
             addLog("<span style='color:#ff0000'>[LEVEL 7 CLEARANCE GRANTED]</span>", "#ff0000");
             addLog("They told you these were just theories.", "#00cc00");
             addLog("Welcome to the real world.");
             refreshChoices();
-        }
+        };
 
-        setInterval(() => { updateStatus(); checkSleeperMode(); }, 3200);
-        
-        document.addEventListener('keydown', e => {
-            if (e.key.toLowerCase() === 'r') {
-                sanity = Math.min(100, sanity + 22);
-                addLog("RED PILL INJECTED • CLARITY RESTORED", "#00ff00");
-            }
-        });
-
-        window.onload = boot;
+        setInterval(updateStatus, 3500);
     </script>
 </body>
 </html>
