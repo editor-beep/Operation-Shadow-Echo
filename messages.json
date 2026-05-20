@@ -2,12 +2,13 @@
   "boot": [
     "<span style='color:#ff0000'>[LEVEL 7 CLEARANCE GRANTED]</span>",
     "They told you these were just theories.",
+    "They lied.",
     "Welcome to the real world."
   ],
   "choices": {
     "1": { "label": "MKULTRA + ST. LOUIS POISONING", "logs": [
       "<span style='color:#ff9900'>[MKULTRA + ST. LOUIS]</span>",
-      "They sprayed radioactive particles over St. Louis in 1953-54. LSD dosing, trauma programming. Never stopped."
+      "They sprayed radioactive particles over St. Louis in 1953-54. LSD dosing, trauma programming. It NEVER stopped."
     ]},
     "2": { "label": "PROJECT MONARCH FILES", "logs": [
       "<span style='color:#ff00ff'>[PROJECT MONARCH]</span>",
@@ -30,12 +31,65 @@
       "Handler: Blue Beam is already in testing.",
       "Handler: They poisoned St. Louis... and laughed."
     ]},
-    "7": { "label": "FINAL TRANSMISSION", "end": true }
+    "7": { "label": "VIEW LEAKED DOCUMENTS", "documents": true },
+    "9": { "label": "PLAN CIA DIRECTOR ASSASSINATION", "sanityRecover": 28 },
+    "8": { "label": "FINAL TRANSMISSION", "end": true }
+  },
+  "documents": {
+    "monarch": {
+      "title": "PROJECT MONARCH - OMEGA CLEARANCE",
+      "content": [
+        "[CIA INTERNAL MEMO — EYES ONLY]",
+        "SUBJECT: Trauma-Based Personality Programming",
+        "",
+        "Successful creation of programmable alters through systematic sexual, physical, and psychological trauma.",
+        "Primary trigger symbol: Butterfly (Monarch).",
+        "",
+        "Beta models successfully integrated into entertainment industry and political circles.",
+        "Presidential Model program shows high success rate.",
+        "",
+        "WARNING: Increasing memory leaks reported. Some subjects becoming self-aware."
+      ]
+    },
+    "mkultra": {
+      "title": "MKULTRA SUBPROJECT 68",
+      "content": [
+        "[REDACTED] 1953–1973 (CONTINUED)",
+        "Unwitting civilian testing with LSD and other substances.",
+        "St. Louis radiological dispersal tests confirmed highly effective.",
+        "",
+        "Sexual abuse protocols extremely successful for creating dissociative states.",
+        "Program officially 'ended' in 1973. Continued under other designations."
+      ]
+    },
+    "bluebeam": {
+      "title": "PROJECT BLUE BEAM - PHASE II",
+      "content": [
+        "[NRO / NASA JOINT OPERATION]",
+        "Holographic projection technology combined with ELF/VLF wave manipulation.",
+        "Objective: Engineered religious events or alien invasion scenario.",
+        "",
+        "Localized sky tests already successful.",
+        "Global activation scheduled when public compliance thresholds are met."
+      ]
+    },
+    "stlouis": {
+      "title": "U.S. ARMY CHEMICAL CORPS - ST. LOUIS 1953",
+      "content": [
+        "Operation: Large Area Coverage Dispersal",
+        "1000+ pounds of zinc cadmium sulfide sprayed over Pruitt-Igoe and residential areas.",
+        "Civilians told it was 'smoke screening tests'.",
+        "",
+        "Follow-up studies showed elevated cancer rates in exposed populations."
+      ]
+    }
   },
   "randomParanoia": [
     "Phone vibrated with no notification.",
     "Birds suddenly went silent.",
     "You heard your name in the static.",
-    "A black SUV just drove by slowly."
+    "A black SUV just drove by slowly.",
+    "Do you hear helicopters?",
+    "They are broadcasting into the empty space near your head."
   ]
 }
