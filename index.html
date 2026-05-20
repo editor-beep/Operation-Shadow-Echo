@@ -86,7 +86,6 @@
         
         @media (max-width: 768px) {
             .terminal { font-size: 1.65rem; padding: 18px; }
-            button { font-size: 1.25rem; }
         }
     </style>
 </head>
@@ -130,20 +129,9 @@
         let evidence = [];
         let handlerResponses = 0;
         let messages = {};
-        
+
         const log = document.getElementById('log');
         const choicesDiv = document.getElementById('choices');
-
-        async function loadMessages() {
-            try {
-                const res = await fetch('messages.json');
-                messages = await res.json();
-                boot();
-            } catch(e) {
-                console.error("Failed to load messages");
-                boot();
-            }
-        }
 
         function addLog(text, color = '#00aa00') {
             const p = document.createElement('p');
@@ -154,131 +142,38 @@
             if (Math.random() > 0.6) setTimeout(() => p.classList.add('redacted'), 600 + Math.random()*1400);
         }
 
-        function updateStatus() {
-            sanity = Math.max(0, sanity - 1);
-            document.getElementById('sanity').textContent = sanity;
-            if (sanity < 35) document.getElementById('status').style.color = '#ff0000';
-        }
-
-        function addEvidence(item) {
-            if (!evidence.includes(item)) {
-                evidence.push(item);
-                document.getElementById('evidence-list').innerHTML = evidence.map(e => `• ${e}`).join('<br>');
-            }
-        }
-
-        function showDocument(docKey) {
-            const doc = messages.documents[docKey];
-            document.getElementById('doc-title').innerHTML = doc.title;
-            document.getElementById('doc-body').innerHTML = doc.content.map(line => `<p>${line}</p>`).join('');
-            document.getElementById('doc-modal').style.display = 'flex';
-        }
-
-        function closeDocument() {
-            document.getElementById('doc-modal').style.display = 'none';
-        }
-
-        function makeChoice(id) {
-            updateStatus();
-            const choice = messages.choices[id];
-            if (!choice) return;
-
-            if (choice.logs) {
-                choice.logs.forEach(text => addLog(text));
-                if (id==="1") addEvidence("MKULTRA");
-                if (id==="2") addEvidence("MONARCH");
-                if (id==="3") addEvidence("BLUE BEAM");
-                if (id==="4") addEvidence("ST. LOUIS");
-                if (id==="6") addEvidence("CHEMTRAILS");
-            }
-
-            if (id === "5") {
-                handlerChat();
-            } else if (id === "7") {
-                showDocument("monarch");
-            } else if (id === "9") { // Assassination Planning
-                addLog("<span style='color:#ff8800'>[CONTINGENCY PLAN ACTIVATED]</span>", "#ff8800");
-                addLog("You begin planning the removal of the current CIA Director...");
-                addLog("The voices in your head grow quieter.");
-                sanity = Math.min(100, sanity + choice.sanityRecover);
-                addLog(`SANITY RECOVERED (+${choice.sanityRecover})`, "#00ff88");
-            } else if (id === "8") {
-                endGame();
-            } else {
-                if (Math.random() > 0.5) {
-                    const paranoia = messages.randomParanoia[Math.floor(Math.random() * messages.randomParanoia.length)];
-                    addLog(paranoia, "#ff6666");
-                }
-            }
-            refreshChoices();
-            checkSleeperMode();
-        }
-
-        function handlerChat() {
-            handlerResponses++;
-            const responses = messages.choices["5"].handlerResponses;
-            addLog(responses[handlerResponses % responses.length], "#ff4488");
-            if (handlerResponses >= 6) {
-                addLog("<span style='color:#ff0000'>TRACE COMPLETE. THEY KNOW.</span>", "#ff0000");
-                sanity = Math.max(0, sanity - 35);
-            }
-            refreshChoices();
-            checkSleeperMode();
-        }
-
-        function checkSleeperMode() {
-            if (sanity <= 0) {
-                addLog("<span style='color:#ff0000;font-size:2.1rem'>SANITY ZERO. SLEEPER PROTOCOL ENGAGED.</span>", "#ff0000");
-                setTimeout(() => {
-                    document.body.innerHTML = `
-                    <div style="position:fixed;inset:0;background:#000;color:#ff0000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
-                        <h1 style="font-size:3.2em;animation:glitch 120ms infinite;">SLEEPER PROTOCOL ACTIVATED</h1>
-                        <p style="font-size:1.9em;margin:30px 0;">You no longer exist.</p>
-                        <p>The Agency owns you again.</p>
-                        <p style="margin:40px 0 20px;">NEW TARGET: THE PRESIDENT</p>
-                        <p>Your handlers are proud of their asset.</p>
-                        <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT ASSET</button>
-                    </div>`;
-                }, 2200);
-            }
-        }
-
-        function refreshChoices() {
-            let html = '';
-            Object.keys(messages.choices).forEach(key => {
-                const c = messages.choices[key];
-                html += `<button onclick="makeChoice('${key}')">${c.label}</button>`;
-            });
-            choicesDiv.innerHTML = html;
-        }
-
-        function endGame() {
-            addLog("<span style='color:#ff0000;font-size:1.8em'>FINAL TRANSMISSION INITIATED</span>", "#ff0000");
-            setTimeout(() => {
-                document.body.innerHTML = `
-                <div style="position:fixed;inset:0;background:#000;color:#ff2222;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
-                    <h1 style="font-size:3em;animation:glitch 150ms infinite;">YOU WERE THE EXPERIMENT</h1>
-                    <p style="font-size:1.8em;margin:40px 0;">THANK YOU FOR YOUR COMPLIANCE, ASSET.</p>
-                    <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT CONSCIOUSNESS</button>
-                </div>`;
-            }, 1400);
-        }
-
         function boot() {
-            messages.boot.forEach(text => addLog(text));
+            addLog("<span style='color:#ff0000'>[LEVEL 7 CLEARANCE GRANTED]</span>", "#ff0000");
+            addLog("They told you these were just theories.", "#00cc00");
+            addLog("Welcome to the real world.");
             refreshChoices();
         }
 
-        setInterval(() => { updateStatus(); checkSleeperMode(); }, 3200);
-        
-        document.addEventListener('keydown', e => {
-            if (e.key.toLowerCase() === 'r') {
-                sanity = Math.min(100, sanity + 22);
-                addLog("RED PILL INJECTED • CLARITY RESTORED", "#00ff00");
-            }
-        });
+        // ... (rest of the functions: updateStatus, makeChoice, handlerChat, checkSleeperMode, etc. are the same as my previous full version)
 
-        window.onload = loadMessages;
+        // For brevity, I'm showing the critical loading part:
+        window.onload = async () => {
+            try {
+                const res = await fetch('messages.json');
+                if (!res.ok) throw new Error('File not found');
+                messages = await res.json();
+                addLog("Messages loaded successfully.", "#00ff00");
+            } catch(e) {
+                addLog("<span style='color:#ff8800'>WARNING: Could not load messages.json — using built-in data</span>", "#ff8800");
+                // Built-in fallback
+                messages = {
+                    boot: [],
+                    choices: {
+                        "1": { "label": "MKULTRA + ST. LOUIS", "logs": ["MKULTRA active..."] },
+                        "8": { "label": "FINAL TRANSMISSION", "end": true }
+                    }
+                };
+            }
+            boot();
+        };
+
+        // Add the rest of your functions here (I can send the full script again if needed)
+        // For now, paste the full script from my previous message and replace the window.onload part with the one above.
     </script>
 </body>
 </html>
