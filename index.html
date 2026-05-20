@@ -72,7 +72,7 @@
             background: #0a0a0a; border: 4px solid #880000;
             max-width: 92%; max-height: 88%; overflow-y: auto;
             padding: 30px; color: #ffdddd; font-size: 1.45rem;
-            box-shadow: 0 0 40px #440000;
+            box-shadow: 0 0 40px #440000; position: relative;
         }
         .doc-title { color: #ff0000; font-size: 2.1rem; text-align: center; margin-bottom: 25px; }
         .close-btn {
@@ -86,6 +86,7 @@
         
         @media (max-width: 768px) {
             .terminal { font-size: 1.65rem; padding: 18px; }
+            button { font-size: 1.25rem; }
         }
     </style>
 </head>
@@ -117,7 +118,7 @@
     </div>
 
     <div id="doc-modal">
-        <div id="doc-content" style="position:relative">
+        <div id="doc-content">
             <div class="close-btn" onclick="closeDocument()">CLOSE FILE [X]</div>
             <div id="doc-title" class="doc-title"></div>
             <div id="doc-body"></div>
@@ -128,7 +129,6 @@
         let sanity = 83;
         let evidence = [];
         let handlerResponses = 0;
-        let messages = {};
 
         const log = document.getElementById('log');
         const choicesDiv = document.getElementById('choices');
@@ -139,7 +139,132 @@
             p.style.color = color;
             log.appendChild(p);
             log.scrollTop = log.scrollHeight;
-            if (Math.random() > 0.6) setTimeout(() => p.classList.add('redacted'), 600 + Math.random()*1400);
+            if (Math.random() > 0.6) setTimeout(() => p.classList.add('redacted'), 600 + Math.random() * 1400);
+        }
+
+        function updateStatus() {
+            sanity = Math.max(0, sanity - 1);
+            document.getElementById('sanity').textContent = sanity;
+            if (sanity < 35) document.getElementById('status').style.color = '#ff0000';
+        }
+
+        function addEvidence(item) {
+            if (!evidence.includes(item)) {
+                evidence.push(item);
+                document.getElementById('evidence-list').innerHTML = evidence.map(e => `• ${e}`).join('<br>');
+            }
+        }
+
+        function showDocument(key) {
+            const docs = {
+                monarch: { 
+                    title: "PROJECT MONARCH - OMEGA CLEARANCE", 
+                    content: ["[CIA INTERNAL MEMO — EYES ONLY]", "Successful creation of programmable alters through trauma.", "Butterfly triggers confirmed in media and politics."] 
+                }
+            };
+            const doc = docs[key] || docs.monarch;
+            document.getElementById('doc-title').innerHTML = doc.title;
+            document.getElementById('doc-body').innerHTML = doc.content.map(line => `<p>${line}</p>`).join('');
+            document.getElementById('doc-modal').style.display = 'flex';
+        }
+
+        function closeDocument() {
+            document.getElementById('doc-modal').style.display = 'none';
+        }
+
+        function makeChoice(id) {
+            updateStatus();
+
+            if (id === "1") {
+                addLog("<span style='color:#ff9900'>[MKULTRA + ST. LOUIS]</span>", "#ff9900");
+                addLog("They sprayed radioactive particles over St. Louis in 1953-54. Never stopped.");
+                addEvidence("MKULTRA");
+            } else if (id === "2") {
+                addLog("<span style='color:#ff00ff'>[PROJECT MONARCH]</span>", "#ff00ff");
+                addLog("Trauma-based mind control. Butterfly triggers everywhere.");
+                addEvidence("MONARCH");
+            } else if (id === "3") {
+                addLog("<span style='color:#00ddff'>[PROJECT BLUE BEAM]</span>", "#00ddff");
+                addLog("Holographic false flags. The sky is their screen.");
+                addEvidence("BLUE BEAM");
+            } else if (id === "4") {
+                addLog("<span style='color:#ff8800'>[ST. LOUIS ARCHIVES]</span>", "#ff8800");
+                addLog("Radioactive spraying on civilians. Cancer clusters followed.");
+                addEvidence("ST. LOUIS");
+            } else if (id === "5") {
+                handlerChat();
+                return;
+            } else if (id === "6") {
+                addLog("Smart dust + heavy metals falling daily.");
+                addEvidence("CHEMTRAILS");
+            } else if (id === "7") {
+                showDocument("monarch");
+                return;
+            } else if (id === "9") {
+                addLog("<span style='color:#ff8800'>[CONTINGENCY PLAN ACTIVATED]</span>", "#ff8800");
+                addLog("You begin planning the removal of the current CIA Director...");
+                sanity = Math.min(100, sanity + 28);
+                addLog("SANITY RECOVERED (+28)", "#00ff88");
+            } else if (id === "8") {
+                endGame();
+                return;
+            }
+
+            if (Math.random() > 0.5) {
+                const paranoia = ["Phone vibrated with no notification.", "Birds suddenly went silent.", "You heard your name in the static."];
+                addLog(paranoia[Math.floor(Math.random() * paranoia.length)], "#ff6666");
+            }
+            refreshChoices();
+            checkSleeperMode();
+        }
+
+        function handlerChat() {
+            handlerResponses++;
+            const msgs = ["Handler: You're starting to wake up...", "Handler: Monarch runs deeper than you can imagine.", "Handler: Blue Beam is already in testing."];
+            addLog(msgs[handlerResponses % msgs.length], "#ff4488");
+            if (handlerResponses >= 5) sanity = Math.max(0, sanity - 35);
+            refreshChoices();
+            checkSleeperMode();
+        }
+
+        function checkSleeperMode() {
+            if (sanity <= 0) {
+                addLog("<span style='color:#ff0000;font-size:2.1rem'>SLEEPER PROTOCOL ENGAGED</span>", "#ff0000");
+                setTimeout(() => {
+                    document.body.innerHTML = `
+                    <div style="position:fixed;inset:0;background:#000;color:#ff0000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
+                        <h1 style="font-size:3.2em;animation:glitch 120ms infinite;">SLEEPER PROTOCOL ACTIVATED</h1>
+                        <p style="font-size:1.9em;margin:30px 0;">NEW TARGET: THE PRESIDENT</p>
+                        <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT ASSET</button>
+                    </div>`;
+                }, 1800);
+            }
+        }
+
+        function refreshChoices() {
+            choicesDiv.innerHTML = `
+                <button onclick="makeChoice(1)">MKULTRA + ST. LOUIS POISONING</button>
+                <button onclick="makeChoice(2)">PROJECT MONARCH FILES</button>
+                <button onclick="makeChoice(3)">PROJECT BLUE BEAM</button>
+                <button onclick="makeChoice(4)">ST. LOUIS ARCHIVES</button>
+                <button onclick="makeChoice(6)">CHEMTRAILS & SMART DUST</button>
+                <button onclick="makeChoice(5)">CHAT WITH HANDLER</button>
+                <button onclick="makeChoice(7)">VIEW LEAKED DOCUMENTS</button>
+                <button onclick="makeChoice(9)">PLAN CIA DIRECTOR ASSASSINATION</button>
+                <button onclick="makeChoice(8)" style="color:#ff3333;margin-top:12px">FINAL TRANSMISSION</button>
+            `;
+        }
+
+        function endGame() {
+            addLog("<span style='color:#ff0000;font-size:1.8em'>FINAL TRANSMISSION INITIATED</span>", "#ff0000");
+            setTimeout(() => {
+                document.body.innerHTML = `
+                <div style="position:fixed;inset:0;background:#000;color:#ff2222;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;font-family:VT323">
+                    <h1 style="font-size:3em;animation:glitch 150ms infinite;">YOU WERE THE EXPERIMENT</h1>
+                    <p style="font-size:1.8em;margin:40px 0;">THANK YOU FOR YOUR COMPLIANCE, ASSET.</p>
+                    <button onclick="location.reload()" style="padding:25px 70px;font-size:1.8em;background:#220000;color:#ff6666;border:4px solid #990000;">REBOOT CONSCIOUSNESS</button>
+                </div>`;
+            }, 1400);
         }
 
         function boot() {
@@ -149,31 +274,16 @@
             refreshChoices();
         }
 
-        // ... (rest of the functions: updateStatus, makeChoice, handlerChat, checkSleeperMode, etc. are the same as my previous full version)
-
-        // For brevity, I'm showing the critical loading part:
-        window.onload = async () => {
-            try {
-                const res = await fetch('messages.json');
-                if (!res.ok) throw new Error('File not found');
-                messages = await res.json();
-                addLog("Messages loaded successfully.", "#00ff00");
-            } catch(e) {
-                addLog("<span style='color:#ff8800'>WARNING: Could not load messages.json — using built-in data</span>", "#ff8800");
-                // Built-in fallback
-                messages = {
-                    boot: [],
-                    choices: {
-                        "1": { "label": "MKULTRA + ST. LOUIS", "logs": ["MKULTRA active..."] },
-                        "8": { "label": "FINAL TRANSMISSION", "end": true }
-                    }
-                };
+        setInterval(() => { updateStatus(); checkSleeperMode(); }, 3200);
+        
+        document.addEventListener('keydown', e => {
+            if (e.key.toLowerCase() === 'r') {
+                sanity = Math.min(100, sanity + 22);
+                addLog("RED PILL INJECTED • CLARITY RESTORED", "#00ff00");
             }
-            boot();
-        };
+        });
 
-        // Add the rest of your functions here (I can send the full script again if needed)
-        // For now, paste the full script from my previous message and replace the window.onload part with the one above.
+        window.onload = boot;
     </script>
 </body>
 </html>
