@@ -22,6 +22,12 @@ glitch, and creeping paranoia.
 - **Document viewer** — classified memos pulled from the lore, with redaction styling.
 - **Layer toggle** — `SURFACE → DEEP STATE → MYTHIC`. Filter the constellation by reality layer.
 - **TRANSMIT** — export the current map state + connections as a JSON field report.
+- **Signal audio** — toggleable procedural Web Audio bed (low detuned drone +
+  band-passed static hiss) with teletype clicks on node open, handler-channel
+  beeps, and static stings on paranoia events. The bed reacts to sanity: as it
+  falls the hiss swells, the drone muddies and detunes, and a waveshaper bites
+  in — hitting zero triggers a panic collapse. Autoplay-safe (nothing sounds
+  until you enable it); the on/off preference persists in `localStorage`.
 
 ## Tech
 
@@ -48,5 +54,6 @@ Narrative seed data lives in `messages.json` and inline in `index.html` (the
 
 - Custom node typewriter reveal + per-node scanline overlays
 - Add-node-on-the-fly authoring ("unhoused words" publishing)
-- Audio: teletype + static bed
+- ~~Audio: teletype + static bed~~ ✓ shipped
+- Audio next: `AnalyserNode`-driven glitch sync, WaveShaper escalation tuning
 - Next.js + React Flow migration for shared "leaks" via Supabase
