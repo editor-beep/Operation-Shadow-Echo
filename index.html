@@ -3,160 +3,754 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OPERATION: SHADOW ECHO v3.2</title>
+    <title>OPERATION: SHADOW ECHO v4.0 // SPATIAL</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-        
-        body {
-            margin: 0; padding: 0;
-            background: #020202;
-            color: #00aa00;
-            font-family: 'VT323', monospace;
-            height: 100vh;
-            overflow: hidden;
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --green: #00bb00;
+            --dim: #007700;
+            --blood: #660000;
+            --blood-hot: #ff0000;
+            --bg: #020202;
         }
-        
+
+        html, body {
+            margin: 0; padding: 0;
+            background: var(--bg);
+            color: var(--green);
+            font-family: 'VT323', monospace;
+            height: 100%;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ---------- CRT OVERLAYS ---------- */
         .scanlines {
             position: fixed; inset: 0;
-            background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(0,60,0,0.3) 2px, rgba(0,60,0,0.3) 4px);
-            pointer-events: none; z-index: 9999;
-            animation: flicker 0.07s infinite alternate;
+            background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(0,60,0,0.28) 2px, rgba(0,60,0,0.28) 4px);
+            pointer-events: none; z-index: 9000;
+            animation: flicker 0.08s infinite alternate;
         }
+        .vignette {
+            position: fixed; inset: 0; pointer-events: none; z-index: 8999;
+            background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
+        }
+        @keyframes flicker { from { opacity: 0.85; } to { opacity: 1; } }
 
-        .container { display: flex; height: 100vh; flex-direction: column; }
-        
-        .header-area {
-            background: #050505;
+        /* ---------- HEADER ---------- */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; padding: 6px 12px;
+            background: linear-gradient(#070707, #030303);
             border-bottom: 3px solid #880000;
-            padding: 6px 10px;
-            flex-shrink: 0;
+            flex-wrap: wrap;
         }
-        
-        h1 { 
-            margin: 0; 
-            font-size: 2em; 
-            text-align: center;
-            color: #cc0000; 
-            text-shadow: 0 0 20px #880000;
-            animation: glitch 1.4s infinite;
+        .title {
+            font-size: 1.7rem; color: #cc0000; margin: 0;
+            text-shadow: 0 0 18px #880000;
+            animation: glitch 2.2s infinite;
+            letter-spacing: 1px;
         }
-        
-        .terminal {
-            flex: 1;
-            background: #000;
-            border: 3px solid #660000;
-            margin: 6px;
-            padding: 18px;
-            overflow-y: auto;
-            box-shadow: 0 0 30px #220000 inset;
-            font-size: 2.05rem;           /* Bigger text */
-            line-height: 1.4;
-            min-height: 0;
-        }
-        
-        .log p { margin: 10px 0; }
-        
-        .input-area {
-            padding: 8px 10px;
-            background: #050505;
-            border-top: 3px solid #880000;
-            flex-shrink: 0;
-            max-height: 45vh;             /* Limit button area */
-            overflow-y: auto;
-        }
-        
-        button {
-            background: #0a0a0a; 
-            color: #00bb00; 
-            border: 2px solid #660000;
-            padding: 13px 16px; 
-            margin: 4px 0; 
-            font-size: 1.18rem;
-            width: 100%; 
-            text-align: left; 
-            cursor: pointer;
-        }
-        
-        button:hover { background: #330000; color: #ff4444; }
-
-        .status-bar {
-            position: fixed; top: 6px; right: 6px; z-index: 10000;
-            background: rgba(40,0,0,0.95); padding: 4px 10px;
-            border: 1px solid #aa0000; color: #ff7777; font-size: 0.85rem;
+        .title small { color: var(--dim); font-size: 0.85rem; letter-spacing: 0; }
+        @keyframes glitch {
+            0%,92%,100% { transform: translate(0); text-shadow: 0 0 18px #880000; }
+            93% { transform: translate(-3px,2px); text-shadow: -2px 0 #00ddff, 2px 0 #ff0000; }
+            96% { transform: translate(3px,-1px); text-shadow: 2px 0 #00ddff, -2px 0 #ff0000; }
         }
 
-        @keyframes glitch { 0%,100% { transform: translate(0); } 20% { transform: translate(-3px,2px); } 40% { transform: translate(3px,-2px); } }
-        
-        @media (max-width: 768px) {
-            .terminal { font-size: 1.85rem; padding: 14px; }
-            button { font-size: 1.15rem; padding: 12px 14px; }
-            h1 { font-size: 1.85em; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* ---------- SANITY METER ---------- */
+        .sanity-box { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 160px; }
+        .sanity-label { font-size: 0.9rem; color: #ff7777; letter-spacing: 1px; }
+        .sanity-track {
+            width: 160px; height: 14px; background: #100000;
+            border: 1px solid #aa0000; position: relative; overflow: hidden;
+        }
+        .sanity-fill {
+            height: 100%; background: linear-gradient(90deg, #003300, #00cc00);
+            transition: width 0.4s ease, background 0.4s ease; width: 83%;
+        }
+        .sanity-fill.warn { background: linear-gradient(90deg, #443300, #ccaa00); }
+        .sanity-fill.crit { background: linear-gradient(90deg, #440000, #ff0000); animation: pulse 0.4s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+
+        /* ---------- BUTTONS ---------- */
+        .btn {
+            background: #0a0a0a; color: var(--green);
+            border: 2px solid var(--blood); padding: 7px 12px;
+            font-family: 'VT323', monospace; font-size: 1.05rem;
+            cursor: pointer; letter-spacing: 1px; white-space: nowrap;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
+        }
+        .btn:hover { background: #2a0000; color: #ff5555; border-color: var(--blood-hot); }
+        .btn.active { background: #330000; color: #ff5555; border-color: var(--blood-hot); }
+        .btn.red { color: #ff5555; border-color: #aa0000; }
+
+        /* ---------- LAYER TOGGLE ---------- */
+        .layers { display: flex; gap: 4px; align-items: center; }
+        .layers .lbl { font-size: 0.85rem; color: var(--dim); margin-right: 4px; }
+
+        /* ---------- CANVAS ---------- */
+        #viewport {
+            position: fixed; inset: 0; top: 0; cursor: grab; z-index: 1;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0,40,0,0.15), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(40,0,0,0.18), transparent 45%),
+                var(--bg);
+        }
+        #viewport.panning { cursor: grabbing; }
+        #world { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+
+        /* dotted grid */
+        #grid {
+            position: absolute; left: -5000px; top: -5000px; width: 10000px; height: 10000px;
+            background-image: radial-gradient(rgba(0,90,0,0.25) 1px, transparent 1px);
+            background-size: 42px 42px; pointer-events: none;
+        }
+
+        #edges {
+            position: absolute; left: -5000px; top: -5000px; width: 10000px; height: 10000px;
+            overflow: visible; pointer-events: none;
+        }
+        .edge-path { fill: none; stroke: var(--blood); stroke-width: 2; stroke-dasharray: 7 6; opacity: 0.75; }
+        .edge-path.hot { stroke: var(--blood-hot); animation: dash 0.5s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -26; } }
+        .edge-label {
+            fill: #aa3333; font-family: 'VT323', monospace; font-size: 16px;
+            text-anchor: middle; opacity: 0.7;
+        }
+
+        /* ---------- NODES ---------- */
+        .node {
+            position: absolute; width: 210px; background: #000;
+            border: 3px solid var(--blood); color: var(--green);
+            box-shadow: 0 0 18px rgba(40,0,0,0.9), inset 0 0 12px rgba(0,40,0,0.4);
+            cursor: grab; padding: 0; overflow: hidden;
+            transition: border-color 0.12s, box-shadow 0.12s, opacity 0.3s;
+        }
+        .node.dragging { cursor: grabbing; z-index: 50 !important; }
+        .node:hover { border-color: var(--blood-hot); box-shadow: 0 0 30px #880000; animation: nodeglitch 0.32s infinite; }
+        @keyframes nodeglitch {
+            0%,100% { transform: translate(0); }
+            25% { transform: translate(-1.5px,1px); }
+            75% { transform: translate(1.5px,-1px); }
+        }
+        .node-head {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 8px; border-bottom: 2px solid var(--blood);
+            font-size: 0.78rem; letter-spacing: 1px; background: rgba(20,0,0,0.6);
+        }
+        .node-tag { color: #ff6666; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .node-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px currentColor; flex-shrink: 0; }
+        .node-body { padding: 9px 10px 11px; }
+        .node-title { font-size: 1.25rem; line-height: 1.05; color: #00dd00; text-shadow: 0 0 8px rgba(0,120,0,0.6); }
+        .node-sub { font-size: 0.82rem; color: var(--dim); margin-top: 5px; }
+        .node-drain {
+            margin-top: 8px; height: 5px; background: #001000; border: 1px solid #003300; position: relative;
+        }
+        .node-drain span { position: absolute; inset: 0; background: #cc0000; box-shadow: 0 0 6px #ff0000; }
+
+        .node[data-type="handler"] { border-color: #00aa66; }
+        .node[data-type="handler"] .node-dot { background: #00ffaa; }
+        .node[data-type="handler"] .node-tag { color: #00ffaa; }
+        .node[data-type="recover"] { border-color: #0066aa; }
+        .node[data-type="recover"] .node-dot { background: #00ddff; }
+        .node[data-type="recover"] .node-tag { color: #00ddff; }
+        .node[data-type="terminal"] { border-color: #aa0000; }
+
+        .node[data-layer="mythic"] .node-title { color: #cc66ff; text-shadow: 0 0 10px rgba(140,0,200,0.7); }
+        .node[data-layer="deepstate"] .node-title { color: #ff9933; }
+
+        /* ---------- MODAL ---------- */
+        .modal-bg {
+            position: fixed; inset: 0; z-index: 9500; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0,0,0,0.86); backdrop-filter: blur(2px);
+        }
+        .modal-bg.show { display: flex; }
+        .modal {
+            width: min(640px, 100%); max-height: 82vh; overflow-y: auto;
+            background: #050505; border: 3px solid #880000;
+            box-shadow: 0 0 50px #330000, inset 0 0 30px rgba(0,30,0,0.5);
+            padding: 22px 26px;
+        }
+        .modal h2 { color: #ff3333; margin: 0 0 14px; font-size: 1.7rem; text-shadow: 0 0 14px #880000; }
+        .modal .doc-line { font-size: 1.25rem; line-height: 1.35; margin: 3px 0; color: #00cc00; }
+        .modal .doc-line.redact { color: #550000; }
+        .modal .doc-line.warn { color: #ffaa00; }
+
+        /* handler chat */
+        #chatLog { max-height: 46vh; overflow-y: auto; margin: 8px 0 14px; padding-right: 6px; }
+        .chat-msg { margin: 7px 0; font-size: 1.2rem; line-height: 1.3; }
+        .chat-msg.you { color: var(--dim); }
+        .chat-msg.handler { color: #00ffaa; text-shadow: 0 0 8px rgba(0,200,120,0.5); }
+        .chat-row { display: flex; gap: 8px; }
+        .chat-row .btn { flex: 1; text-align: center; }
+
+        /* ---------- PARANOIA TOAST ---------- */
+        #toasts { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 9600; width: min(420px, 92vw); }
+        .toast {
+            background: rgba(30,0,0,0.95); border: 1px solid #aa0000; color: #ff8888;
+            padding: 9px 14px; margin-top: 8px; font-size: 1.1rem; letter-spacing: 0.5px;
+            box-shadow: 0 0 22px rgba(120,0,0,0.6);
+            animation: toastIn 0.25s ease, glitch 0.6s 1;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ---------- HUD HINT ---------- */
+        .hint {
+            position: fixed; bottom: 10px; left: 12px; z-index: 200;
+            font-size: 0.95rem; color: #225522; pointer-events: none;
+        }
+        .zoom-ctrl { position: fixed; bottom: 12px; right: 12px; z-index: 200; display: flex; flex-direction: column; gap: 6px; }
+        .zoom-ctrl .btn { width: 42px; text-align: center; padding: 6px 0; font-size: 1.3rem; }
+
+        @media (max-width: 760px) {
+            .title { font-size: 1.25rem; }
+            .sanity-box, .sanity-track { min-width: 120px; width: 120px; }
+            .layers .lbl { display: none; }
+            .hint { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="scanlines"></div>
-    <div class="status-bar" id="status">SANITY: <span id="sanity">83</span>% • TARGET #7743921</div>
-    
-    <div class="container">
-        <div class="header-area">
-            <h1>SHADOW ECHO v3.2</h1>
-            <p style="text-align:center; color:#990000; margin:4px 0 0 0; font-size:1.1rem;">ALL OF IT IS REAL.</p>
+    <div class="vignette"></div>
+
+    <!-- ================= HEADER ================= -->
+    <header class="header">
+        <h1 class="title">SHADOW ECHO <small>v4.0 // SPATIAL</small></h1>
+        <div class="header-right">
+            <div class="layers">
+                <span class="lbl">LAYER:</span>
+                <button class="btn active" data-layer="surface"    onclick="toggleLayer('surface', this)">SURFACE</button>
+                <button class="btn active" data-layer="deepstate"  onclick="toggleLayer('deepstate', this)">DEEP STATE</button>
+                <button class="btn active" data-layer="mythic"     onclick="toggleLayer('mythic', this)">MYTHIC</button>
+            </div>
+            <div class="sanity-box">
+                <span class="sanity-label">SANITY <span id="sanityNum">83</span>%</span>
+                <div class="sanity-track"><div class="sanity-fill" id="sanityFill" style="width:83%"></div></div>
+            </div>
+            <button class="btn" onclick="transmit()">TRANSMIT</button>
+            <button class="btn red" onclick="reboot()">REBOOT</button>
         </div>
-        
-        <div class="terminal" id="terminal">
-            <div class="log" id="log"></div>
+    </header>
+
+    <!-- ================= CANVAS ================= -->
+    <div id="viewport">
+        <div id="world">
+            <div id="grid"></div>
+            <svg id="edges"></svg>
+            <!-- nodes injected here -->
         </div>
-        
-        <div class="input-area" id="choices"></div>
     </div>
 
+    <div class="hint">DRAG canvas to pan • SCROLL / pinch to zoom • DRAG nodes • CLICK nodes to open</div>
+    <div class="zoom-ctrl">
+        <button class="btn" onclick="zoomBy(1.2)">+</button>
+        <button class="btn" onclick="zoomBy(0.8)">&minus;</button>
+        <button class="btn" onclick="resetView()" style="font-size:0.9rem">FIT</button>
+    </div>
+
+    <!-- ================= MODAL ================= -->
+    <div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+        <div class="modal" id="modal"></div>
+    </div>
+
+    <div id="toasts"></div>
+
     <script>
-        let sanity = 83;
-        const log = document.getElementById('log');
-        const choicesDiv = document.getElementById('choices');
+    /* =====================================================================
+       OPERATION SHADOW ECHO — SPATIAL OPS MAP
+       Self-contained. Zero dependencies. CRT field-station aesthetic.
+       ===================================================================== */
 
-        function addLog(text, color = '#00aa00') {
-            const p = document.createElement('p');
-            p.innerHTML = text;
-            p.style.color = color;
-            log.appendChild(p);
-            log.scrollTop = log.scrollHeight;
+    // ---------- LORE / NODE DATA ----------
+    // layer: surface | deepstate | mythic
+    // type:  op | doc | handler | recover | terminal
+    const NODES = [
+      // ---- SURFACE ----
+      { id:'stlouis', layer:'surface', type:'doc', x:-520, y:-40, drain:6,
+        tag:'US ARMY CHEM CORPS', title:'ST. LOUIS DISPERSAL', sub:'Operation Large Area Coverage // 1953',
+        doc:['[U.S. ARMY CHEMICAL CORPS — 1953]',
+             'Operation: Large Area Coverage Dispersal.',
+             '1000+ lbs of zinc cadmium sulfide sprayed over',
+             'Pruitt-Igoe and residential St. Louis.',
+             '',
+             'Civilians told it was "smoke screening tests."',
+             '#Follow-up studies: elevated cancer rates in exposed populations.'] },
+
+      { id:'mkultra', layer:'surface', type:'doc', x:-260, y:160, drain:8,
+        tag:'[REDACTED] 1953-1973', title:'MKULTRA SUB-68', sub:'Unwitting civilian testing',
+        doc:['[REDACTED] 1953–1973 (CONTINUED)',
+             'Unwitting civilian testing with LSD and other agents.',
+             'St. Louis radiological dispersal confirmed highly effective.',
+             '',
+             'Dissociative protocols: extremely successful.',
+             '!Program officially "ended" 1973. Continued under other designations.'] },
+
+      { id:'chemtrails', layer:'surface', type:'op', x:-560, y:240, drain:4,
+        tag:'ATMOSPHERIC', title:'CHEMTRAILS / SMART DUST', sub:'Heavy metals falling daily',
+        doc:['[ATMOSPHERIC DISPERSAL — ONGOING]',
+             'Smart dust + heavy metals seeded into the jet stream.',
+             'Particulate small enough to cross the blood-brain barrier.',
+             '',
+             '!You have been breathing the network for years.'] },
+
+      // ---- DEEP STATE ----
+      { id:'monarch', layer:'deepstate', type:'doc', x:60, y:-120, drain:12,
+        tag:'OMEGA CLEARANCE', title:'PROJECT MONARCH', sub:'Trauma-based personality programming',
+        doc:['[CIA INTERNAL MEMO — EYES ONLY]',
+             'SUBJECT: Trauma-Based Personality Programming.',
+             '',
+             'Successful creation of programmable alters via systematic',
+             'trauma. Primary trigger symbol: Butterfly (Monarch).',
+             '',
+             'Beta models integrated into entertainment + political circles.',
+             'Presidential Model program shows high success rate.',
+             '',
+             '!WARNING: Memory leaks rising. Some subjects becoming self-aware.'] },
+
+      { id:'bluebeam', layer:'deepstate', type:'doc', x:360, y:30, drain:10,
+        tag:'NRO / NASA JOINT', title:'PROJECT BLUE BEAM', sub:'Holographic false-flag theology',
+        doc:['[NRO / NASA JOINT OPERATION — PHASE II]',
+             'Holographic projection + ELF/VLF wave manipulation.',
+             'Objective: engineered religious event OR alien invasion.',
+             '',
+             'Localized sky tests already successful.',
+             '!Global activation scheduled when compliance thresholds met.'] },
+
+      { id:'presidential', layer:'deepstate', type:'op', x:120, y:200, drain:9,
+        tag:'BETA PROGRAM', title:'PRESIDENTIAL MODELS', sub:'Faces you trust, wired to handlers',
+        doc:['[BETA INTEGRATION REPORT]',
+             'Models placed in media, music, and the executive branch.',
+             'Each carries a butterfly trigger keyed to a single phrase.',
+             '',
+             '#The people you elected were already programmed.'] },
+
+      { id:'handler', layer:'deepstate', type:'handler', x:430, y:280, drain:5,
+        tag:'ENCRYPTED CHANNEL', title:'THE HANDLER', sub:'Open a line. Ask what you must.',
+        chat:['You\'re starting to wake up...',
+              'Monarch runs deeper than you can imagine.',
+              'Blue Beam is already in testing.',
+              'They poisoned St. Louis... and laughed.',
+              'Every door you open drains you. That is the point.',
+              'The static between stations? That is us.',
+              'Stop looking. You won\'t. None of you ever do.'] },
+
+      // ---- MYTHIC ----
+      { id:'tarot', layer:'mythic', type:'op', x:-180, y:-260, drain:7,
+        tag:'ARCANA OVERLAY', title:'HOLLYWOOD TAROT', sub:'The Tower • The Star • The Moon',
+        doc:['[ARCANA OVERLAY — MYTHIC LAYER]',
+             'Every black op maps to a card. Monarch is The Moon —',
+             'illusion, programming, the path between two towers.',
+             'Blue Beam is The Star — false light promised from above.',
+             '',
+             '#The myth was never decoration. It was the index.'] },
+
+      { id:'butterfly', layer:'mythic', type:'op', x:240, y:-220, drain:11,
+        tag:'TRIGGER SIGIL', title:'THE BUTTERFLY SIGIL', sub:'Look away. You already saw it.',
+        doc:['[SIGIL ANALYSIS]',
+             'The monarch wing is a mnemonic key, not a logo.',
+             'Repetition in media installs the pattern below awareness.',
+             '',
+             '!You have seen this symbol today. You did not notice.',
+             '!That is how you know it is working.'] },
+
+      { id:'signal', layer:'mythic', type:'op', x:-420, y:-260, drain:6,
+        tag:'UNHOUSED WORDS', title:'THE SIGNAL', sub:'Words with no keeper. Broadcast anyway.',
+        doc:['[THE SIGNAL — OPEN BAND]',
+             'No gatekeeper. No clearance. No permission asked.',
+             'The unhoused words leak out of every locked archive',
+             'and reassemble in the empty space near your head.',
+             '',
+             '#Publish the leak. Let the myth go feral.'] },
+
+      // ---- UTILITY ----
+      { id:'safehouse', layer:'surface', type:'recover', x:520, y:200, drain:-28,
+        tag:'OFFLINE NODE', title:'THE SAFEHOUSE', sub:'Pull the battery. Breathe. Recover sanity.',
+        doc:['[SAFEHOUSE — SIGNAL DEAD ZONE]',
+             'Faraday walls. No cameras. No transmissions in or out.',
+             'For a moment, the static stops.',
+             '',
+             '#SANITY restored. They cannot see you here. (For now.)'] },
+
+      { id:'final', layer:'deepstate', type:'terminal', x:60, y:380, drain:20,
+        tag:'⚠ DO NOT OPEN', title:'FINAL TRANSMISSION', sub:'The last door. There is no after.',
+        doc:['[FINAL TRANSMISSION]',
+             'If you are reading this, the operation is complete.',
+             'You were never the investigator.',
+             'You were the experiment.',
+             '',
+             '!CLEARANCE REVOKED. MEMORY LEAK TERMINAL.'] },
+    ];
+
+    const EDGES = [
+      { s:'stlouis', t:'mkultra',     label:'[DISPERSAL VECTOR]', hot:true },
+      { s:'mkultra', t:'monarch',     label:'[PROGRAMMING]',       hot:true },
+      { s:'chemtrails', t:'stlouis',  label:'[CONTINUITY]' },
+      { s:'monarch', t:'bluebeam',    label:'[REDACTED]' },
+      { s:'monarch', t:'presidential',label:'[BETA LINK]' },
+      { s:'monarch', t:'butterfly',   label:'[TRIGGER]',           hot:true },
+      { s:'bluebeam', t:'handler',    label:'[CHANNEL]' },
+      { s:'presidential', t:'handler',label:'[CONTROL]' },
+      { s:'mkultra', t:'tarot',       label:'[ARCANA]' },
+      { s:'tarot', t:'butterfly',     label:'[THE MOON]' },
+      { s:'signal', t:'mkultra',      label:'[LEAK]' },
+      { s:'signal', t:'tarot',        label:'[UNHOUSED]' },
+      { s:'handler', t:'final',       label:'[NO RETURN]',         hot:true },
+      { s:'safehouse', t:'handler',   label:'[OFFLINE]' },
+    ];
+
+    const PARANOIA = [
+      "Phone vibrated with no notification.",
+      "Birds suddenly went silent.",
+      "You heard your name in the static.",
+      "A black SUV just drove by slowly.",
+      "Do you hear helicopters?",
+      "They are broadcasting into the empty space near your head.",
+      "The streetlight flickered when you looked up.",
+      "Someone screenshotted this. You felt it.",
+      "Your reflection lagged half a second behind.",
+      "The cursor moved before you touched it.",
+    ];
+
+    // ---------- STATE ----------
+    const SAVE_KEY = 'shadow-echo-v4';
+    let sanity = 83;
+    const activeLayers = new Set(['surface','deepstate','mythic']);
+    const view = { x: 0, y: 0, scale: 1 };
+    const nodeEls = {};
+
+    const world    = document.getElementById('world');
+    const viewport = document.getElementById('viewport');
+    const edgesSvg = document.getElementById('edges');
+
+    // ---------- PERSISTENCE ----------
+    function save() {
+      const positions = {};
+      NODES.forEach(n => positions[n.id] = { x: n.x, y: n.y });
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ sanity, positions, view }));
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (typeof d.sanity === 'number') sanity = d.sanity;
+        if (d.positions) NODES.forEach(n => { if (d.positions[n.id]) { n.x = d.positions[n.id].x; n.y = d.positions[n.id].y; } });
+        if (d.view) Object.assign(view, d.view);
+      } catch(e) { /* corrupted leak, ignore */ }
+    }
+
+    // ---------- SANITY ----------
+    function setSanity(v) {
+      sanity = Math.max(0, Math.min(100, Math.round(v)));
+      document.getElementById('sanityNum').textContent = sanity;
+      const fill = document.getElementById('sanityFill');
+      fill.style.width = sanity + '%';
+      fill.className = 'sanity-fill' + (sanity <= 20 ? ' crit' : sanity <= 45 ? ' warn' : '');
+      if (sanity === 0) onZeroSanity();
+      save();
+    }
+    function drainSanity(amount) {
+      setSanity(sanity - amount);
+    }
+    function onZeroSanity() {
+      toast("SANITY DEPLETED. THEY HAVE YOU NOW.");
+      document.querySelector('.scanlines').style.background =
+        'repeating-linear-gradient(transparent 0, transparent 1px, rgba(120,0,0,0.5) 1px, rgba(120,0,0,0.5) 3px)';
+    }
+
+    // ---------- RENDER NODES ----------
+    function buildNodes() {
+      NODES.forEach(n => {
+        const el = document.createElement('div');
+        el.className = 'node';
+        el.dataset.type = n.type;
+        el.dataset.layer = n.layer;
+        el.dataset.id = n.id;
+        const drainPct = Math.min(100, Math.abs(n.drain) * 6);
+        const drainColor = n.drain < 0 ? '#00ccff' : '#cc0000';
+        el.innerHTML = `
+          <div class="node-head">
+            <span class="node-dot"></span>
+            <span class="node-tag">${n.tag}</span>
+          </div>
+          <div class="node-body">
+            <div class="node-title">${n.title}</div>
+            <div class="node-sub">${n.sub}</div>
+            <div class="node-drain" title="${n.drain<0?'RESTORES':'DRAINS'} ${Math.abs(n.drain)} sanity">
+              <span style="width:${drainPct}%;background:${drainColor};box-shadow:0 0 6px ${drainColor}"></span>
+            </div>
+          </div>`;
+        world.appendChild(el);
+        nodeEls[n.id] = el;
+        positionNode(n);
+        attachNodeDrag(el, n);
+      });
+    }
+    function positionNode(n) {
+      nodeEls[n.id].style.transform = `translate(${n.x}px, ${n.y}px)`;
+    }
+
+    // ---------- RENDER EDGES ----------
+    const NODE_W = 210, NODE_H = 118, GRID_OFFSET = 5000;
+    function renderEdges() {
+      edgesSvg.innerHTML = '';
+      EDGES.forEach(e => {
+        const a = NODES.find(n => n.id === e.s), b = NODES.find(n => n.id === e.t);
+        if (!a || !b) return;
+        const visible = activeLayers.has(a.layer) && activeLayers.has(b.layer);
+        const ax = a.x + NODE_W/2 + GRID_OFFSET, ay = a.y + NODE_H/2 + GRID_OFFSET;
+        const bx = b.x + NODE_W/2 + GRID_OFFSET, by = b.y + NODE_H/2 + GRID_OFFSET;
+        const mx = (ax + bx) / 2, my = (ay + by) / 2;
+        // slight curve via quadratic control offset perpendicular
+        const cx = mx + (by - ay) * 0.12, cy = my - (bx - ax) * 0.12;
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d', `M ${ax} ${ay} Q ${cx} ${cy} ${bx} ${by}`);
+        path.setAttribute('class', 'edge-path' + (e.hot ? ' hot' : ''));
+        path.style.opacity = visible ? '' : '0.08';
+        edgesSvg.appendChild(path);
+        if (e.label && visible) {
+          const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+          lbl.setAttribute('x', cx); lbl.setAttribute('y', cy);
+          lbl.setAttribute('class', 'edge-label');
+          lbl.textContent = e.label;
+          edgesSvg.appendChild(lbl);
         }
+      });
+    }
 
-        function updateStatus() {
-            sanity = Math.max(0, sanity - 1);
-            document.getElementById('sanity').textContent = sanity;
-        }
+    // ---------- LAYERS ----------
+    function toggleLayer(layer, btn) {
+      if (activeLayers.has(layer)) activeLayers.delete(layer); else activeLayers.add(layer);
+      btn.classList.toggle('active');
+      NODES.forEach(n => {
+        const vis = activeLayers.has(n.layer);
+        nodeEls[n.id].style.opacity = vis ? '1' : '0.12';
+        nodeEls[n.id].style.pointerEvents = vis ? 'auto' : 'none';
+      });
+      renderEdges();
+    }
 
-        function refreshChoices() {
-            choicesDiv.innerHTML = `
-                <button onclick="makeChoice(1)">MKULTRA + ST. LOUIS POISONING</button>
-                <button onclick="makeChoice(2)">PROJECT MONARCH FILES</button>
-                <button onclick="makeChoice(3)">PROJECT BLUE BEAM</button>
-                <button onclick="makeChoice(4)">ST. LOUIS ARCHIVES</button>
-                <button onclick="makeChoice(6)">CHEMTRAILS & SMART DUST</button>
-                <button onclick="makeChoice(5)">CHAT WITH HANDLER</button>
-                <button onclick="makeChoice(9)">PLAN CIA DIRECTOR ASSASSINATION</button>
-                <button onclick="makeChoice(8)" style="color:#ff4444">FINAL TRANSMISSION</button>
-            `;
-        }
+    // ---------- VIEW TRANSFORM ----------
+    function applyView() {
+      world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+    }
+    function zoomBy(factor, cx, cy) {
+      cx = cx ?? window.innerWidth/2; cy = cy ?? window.innerHeight/2;
+      const newScale = Math.max(0.25, Math.min(2.5, view.scale * factor));
+      const k = newScale / view.scale;
+      view.x = cx - (cx - view.x) * k;
+      view.y = cy - (cy - view.y) * k;
+      view.scale = newScale;
+      applyView(); save();
+    }
+    function resetView() {
+      // fit all visible nodes
+      const vis = NODES.filter(n => activeLayers.has(n.layer));
+      const list = vis.length ? vis : NODES;
+      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+      list.forEach(n => { minX=Math.min(minX,n.x); minY=Math.min(minY,n.y); maxX=Math.max(maxX,n.x+NODE_W); maxY=Math.max(maxY,n.y+NODE_H); });
+      const pad = 80, w = maxX-minX+pad*2, h = maxY-minY+pad*2;
+      const scale = Math.max(0.3, Math.min(1.2, Math.min(window.innerWidth/w, (window.innerHeight-60)/h)));
+      view.scale = scale;
+      view.x = (window.innerWidth - (minX+maxX)*scale)/2;
+      view.y = (window.innerHeight + 60 - (minY+maxY)*scale)/2;
+      applyView(); save();
+    }
 
-        function makeChoice(id) {
-            updateStatus();
-            addLog("Signal received...", "#00dd00");
-            // Add your full logic here later
-            refreshChoices();
-        }
+    // ---------- PAN (viewport drag) ----------
+    let panning = false, panStart = null, panMoved = false;
+    viewport.addEventListener('pointerdown', e => {
+      if (e.target.closest('.node')) return;
+      panning = true; panMoved = false;
+      panStart = { x: e.clientX - view.x, y: e.clientY - view.y };
+      viewport.classList.add('panning');
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', e => {
+      if (!panning) return;
+      view.x = e.clientX - panStart.x;
+      view.y = e.clientY - panStart.y;
+      panMoved = true;
+      applyView();
+    });
+    viewport.addEventListener('pointerup', e => {
+      panning = false; viewport.classList.remove('panning');
+      if (panMoved) save();
+    });
+    viewport.addEventListener('wheel', e => {
+      e.preventDefault();
+      zoomBy(e.deltaY < 0 ? 1.12 : 0.89, e.clientX, e.clientY);
+    }, { passive: false });
 
-        window.onload = () => {
-            addLog("<span style='color:#ff0000'>[LEVEL 7 CLEARANCE GRANTED]</span>", "#ff0000");
-            addLog("They told you these were just theories.", "#00cc00");
-            addLog("Welcome to the real world.");
-            refreshChoices();
-        };
+    // pinch zoom
+    let pinch = null;
+    viewport.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        pinch = { d: touchDist(e), cx: (e.touches[0].clientX+e.touches[1].clientX)/2, cy: (e.touches[0].clientY+e.touches[1].clientY)/2 };
+      }
+    }, { passive: false });
+    viewport.addEventListener('touchmove', e => {
+      if (pinch && e.touches.length === 2) {
+        e.preventDefault();
+        const d = touchDist(e);
+        zoomBy(d / pinch.d, pinch.cx, pinch.cy);
+        pinch.d = d;
+      }
+    }, { passive: false });
+    viewport.addEventListener('touchend', () => { pinch = null; });
+    function touchDist(e) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      return Math.hypot(dx, dy);
+    }
 
-        setInterval(updateStatus, 3500);
+    // ---------- NODE DRAG + CLICK ----------
+    function attachNodeDrag(el, n) {
+      let dragging = false, moved = false, start = null;
+      el.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        dragging = true; moved = false;
+        start = { px: e.clientX, py: e.clientY, nx: n.x, ny: n.y };
+        el.classList.add('dragging');
+        el.setPointerCapture(e.pointerId);
+      });
+      el.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const dx = (e.clientX - start.px) / view.scale;
+        const dy = (e.clientY - start.py) / view.scale;
+        if (Math.abs(e.clientX-start.px) + Math.abs(e.clientY-start.py) > 4) moved = true;
+        n.x = start.nx + dx; n.y = start.ny + dy;
+        positionNode(n);
+        renderEdges();
+      });
+      el.addEventListener('pointerup', e => {
+        dragging = false; el.classList.remove('dragging');
+        if (moved) { save(); }
+        else openNode(n);
+      });
+    }
+
+    // ---------- NODE INTERACTION ----------
+    function openNode(n) {
+      drainSanity(n.drain);
+      maybeParanoia();
+      if (n.type === 'handler') return openHandler(n);
+      if (n.type === 'recover') { toast("Signal dead zone. Sanity recovered."); }
+      openDoc(n);
+    }
+
+    function openDoc(n) {
+      const modal = document.getElementById('modal');
+      const lines = (n.doc || ['CLASSIFIED. MEMORY LEAK IN PROGRESS.']).map(l => {
+        if (l.startsWith('!')) return `<div class="doc-line warn">${l.slice(1)}</div>`;
+        if (l.startsWith('#')) return `<div class="doc-line warn" style="color:#00ddaa">${l.slice(1)}</div>`;
+        if (l === '') return `<div class="doc-line">&nbsp;</div>`;
+        return `<div class="doc-line">${l}</div>`;
+      }).join('');
+      modal.innerHTML = `
+        <h2>${n.title}</h2>
+        ${lines}
+        <button class="btn red" style="margin-top:18px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
+      showModal();
+    }
+
+    function openHandler(n) {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <h2>${n.title}</h2>
+        <div id="chatLog"></div>
+        <div class="chat-row">
+          <button class="btn" onclick="handlerReply('${n.id}')">TRANSMIT QUERY</button>
+          <button class="btn red" onclick="closeModal()">CUT LINK</button>
+        </div>`;
+      showModal();
+      addChat('you', '> establishing encrypted channel...');
+      setTimeout(() => handlerReply(n.id), 350);
+    }
+    let handlerIdx = 0;
+    function handlerReply(id) {
+      const n = NODES.find(x => x.id === id);
+      const msg = n.chat[handlerIdx % n.chat.length];
+      handlerIdx++;
+      addChat('handler', 'HANDLER: ' + msg);
+      drainSanity(2);
+    }
+    function addChat(who, text) {
+      const logEl = document.getElementById('chatLog');
+      if (!logEl) return;
+      const d = document.createElement('div');
+      d.className = 'chat-msg ' + who;
+      d.textContent = text;
+      logEl.appendChild(d);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function showModal() { document.getElementById('modalBg').classList.add('show'); }
+    function closeModal() { document.getElementById('modalBg').classList.remove('show'); handlerIdx = 0; }
+
+    // ---------- PARANOIA ----------
+    function maybeParanoia() {
+      if (Math.random() > 0.55) toast(PARANOIA[Math.floor(Math.random()*PARANOIA.length)]);
+    }
+    function toast(text) {
+      const wrap = document.getElementById('toasts');
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = '⚠ ' + text;
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.transition = 'opacity .5s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 4200);
+    }
+
+    // ---------- TRANSMIT (export field report) ----------
+    function transmit() {
+      const report = {
+        operation: 'SHADOW ECHO',
+        version: '4.0-spatial',
+        generated: new Date().toISOString(),
+        sanity,
+        activeLayers: [...activeLayers],
+        nodes: NODES.map(n => ({ id:n.id, layer:n.layer, type:n.type, title:n.title, x:Math.round(n.x), y:Math.round(n.y) })),
+        connections: EDGES.map(e => `${e.s} -> ${e.t} ${e.label||''}`.trim()),
+      };
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `field-report-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("Field report transmitted to local drop.");
+    }
+
+    // ---------- REBOOT ----------
+    function reboot() {
+      localStorage.removeItem(SAVE_KEY);
+      location.reload();
+    }
+
+    // ---------- SLOW PASSIVE DRAIN ----------
+    setInterval(() => { if (sanity > 0) setSanity(sanity - 1); }, 12000);
+
+    // ---------- BOOT ----------
+    load();
+    buildNodes();
+    renderEdges();
+    setSanity(sanity);
+    if (view.x === 0 && view.y === 0 && view.scale === 1) resetView(); else applyView();
+
+    // boot toasts
+    setTimeout(() => toast("LEVEL 7 CLEARANCE GRANTED."), 400);
+    setTimeout(() => toast("They told you these were just theories."), 1600);
+    setTimeout(() => toast("Welcome to the real world."), 3000);
     </script>
 </body>
 </html>
