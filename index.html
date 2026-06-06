@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OPERATION: SHADOW ECHO v4.1 // DECLASSIFIED</title>
+    <title>OPERATION: SHADOW ECHO v5.0 // DECLASSIFIED</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
@@ -238,12 +238,90 @@
             .sanity-box, .sanity-track { min-width: 120px; width: 120px; }
             .layers .lbl { display: none; }
             .hint { display: none; }
+            #directives { display: none; }
         }
+
+        /* ---------- CLEARANCE / FILES HUD ---------- */
+        .clearance-box { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 150px; }
+        .clearance-label { font-size: 0.9rem; color: #ffaa33; letter-spacing: 1px; }
+        .clearance-label b { color: #ffcc66; text-shadow: 0 0 8px #885500; }
+        .files-label { font-size: 0.78rem; color: #00aa88; letter-spacing: 1px; }
+        .files-label b { color: #00ffcc; }
+        .clearance-up { animation: clearflash 0.9s 1; }
+        @keyframes clearflash {
+            0%,100% { text-shadow: 0 0 8px #885500; }
+            50% { color: #fff; text-shadow: 0 0 22px #ffcc00, 0 0 40px #ff8800; }
+        }
+
+        /* ---------- DREAD CANVAS (static + shadows) ---------- */
+        #dread { position: fixed; inset: 0; pointer-events: none; z-index: 8998; opacity: 0; transition: opacity 1.2s; }
+
+        /* ---------- LINK / FUSE HANDLE ---------- */
+        .node-link {
+            cursor: crosshair; flex-shrink: 0; width: 16px; height: 16px; line-height: 14px;
+            text-align: center; font-size: 0.9rem; color: #00ddff; border: 1px solid #006688;
+            background: #001318; border-radius: 2px; transition: all 0.12s;
+        }
+        .node-link:hover { color: #66eeff; border-color: #00ddff; box-shadow: 0 0 8px #00aacc; }
+        .node.link-source { border-color: #00ddff !important; box-shadow: 0 0 30px #00aacc !important; }
+        .node.link-source .node-link { background: #00ddff; color: #001318; }
+        body.linking .node { cursor: crosshair; }
+        body.linking .node:hover { border-color: #00ddff; box-shadow: 0 0 26px #00aacc; }
+
+        /* player-fused edges */
+        .edge-path.fused { stroke: #00ccff; stroke-dasharray: 3 4; opacity: 0.9; animation: dash 0.4s linear infinite; }
+        .edge-label.fused { fill: #33ddff; }
+
+        /* ---------- DIRECTIVES PANEL ---------- */
+        #directives {
+            position: fixed; top: 64px; left: 12px; z-index: 180; width: 246px;
+            background: rgba(6,2,2,0.92); border: 2px solid #007755;
+            box-shadow: 0 0 22px rgba(0,80,60,0.4); font-size: 0.95rem;
+        }
+        #directives .dir-head {
+            padding: 5px 9px; background: rgba(0,30,24,0.7); border-bottom: 1px solid #007755;
+            color: #00ffcc; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
+        }
+        #directives .dir-head small { color: #007766; }
+        #directives .dir-body { padding: 4px 0; max-height: 50vh; overflow-y: auto; }
+        #directives.collapsed .dir-body { display: none; }
+        .dir-item {
+            padding: 6px 10px; border-bottom: 1px dashed #053a30; line-height: 1.25;
+            display: flex; gap: 7px; align-items: flex-start; color: #66ccaa;
+        }
+        .dir-item:last-child { border-bottom: 0; }
+        .dir-check { flex-shrink: 0; color: #007766; }
+        .dir-item.done { color: #035; text-decoration: line-through; opacity: 0.6; }
+        .dir-item.done .dir-check { color: #00ff88; text-decoration: none; }
+        .dir-reward { display: block; font-size: 0.8rem; color: #ffaa33; margin-top: 2px; }
+        .dir-item.done .dir-reward { display: none; }
+
+        /* ---------- DECISION / ENDGAME MODAL EXTRAS ---------- */
+        .decision .doc-line { font-size: 1.3rem; }
+        .choice-row { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .choice-row .btn { text-align: center; }
+        .ending { text-align: center; }
+        .ending h2 { font-size: 2.2rem; }
+        .ending .verdict { color: #cc66ff; font-size: 1.5rem; text-shadow: 0 0 14px #6600aa; margin: 6px 0 18px; }
+        .ending .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 16px 0; text-align: left; }
+        .ending .stat-grid div { font-size: 1.1rem; color: #00bb88; }
+        .ending .stat-grid b { color: #00ffcc; }
+        .reveal-tag { color: #00ddff; font-size: 1.05rem; letter-spacing: 1px; margin: 4px 0 10px; }
     </style>
 </head>
 <body>
+    <canvas id="dread"></canvas>
     <div class="scanlines"></div>
     <div class="vignette"></div>
+
+    <!-- ================= HANDLER DIRECTIVES ================= -->
+    <aside id="directives">
+        <div class="dir-head" onclick="document.getElementById('directives').classList.toggle('collapsed')">
+            <span>▸ HANDLER DIRECTIVES</span><small id="dirCount">0/0</small>
+        </div>
+        <div class="dir-body" id="dirBody"></div>
+    </aside>
 
     <!-- ================= HEADER ================= -->
     <header class="header">
@@ -255,10 +333,15 @@
                 <button class="btn active" data-layer="deepstate"  onclick="toggleLayer('deepstate', this)">DEEP STATE</button>
                 <button class="btn active" data-layer="mythic"     onclick="toggleLayer('mythic', this)">MYTHIC</button>
             </div>
+            <div class="clearance-box">
+                <span class="clearance-label" id="clearanceLabel">CLEARANCE <b>Lv.1</b> · SURFACE</span>
+                <span class="files-label">DOCUMENTS <b><span id="filesNum">0</span>/<span id="filesTotal">0</span></b> RECOVERED</span>
+            </div>
             <div class="sanity-box">
                 <span class="sanity-label">SANITY <span id="sanityNum">83</span>%</span>
                 <div class="sanity-track"><div class="sanity-fill" id="sanityFill" style="width:83%"></div></div>
             </div>
+            <button class="btn" id="linkBtn" onclick="toggleLinkMode()" title="Fuse two signals — risk/reward. Reveals hidden links.">⊕ FUSE</button>
             <button class="btn" id="audioBtn" onclick="toggleAudio()" title="Procedural signal bed — drone, static, teletype">♪ SIGNAL OFF</button>
             <button class="btn" onclick="transmit()">TRANSMIT</button>
             <button class="btn red" onclick="reboot()">REBOOT</button>
@@ -274,7 +357,7 @@
         </div>
     </div>
 
-    <div class="hint">DRAG canvas to pan • SCROLL / pinch to zoom • DRAG nodes • CLICK nodes to open</div>
+    <div class="hint">DRAG to pan • SCROLL / pinch to zoom • CLICK node to open • ⊕ on a node to FUSE signals</div>
     <div class="zoom-ctrl">
         <button class="btn" onclick="zoomBy(1.2)">+</button>
         <button class="btn" onclick="zoomBy(0.8)">&minus;</button>
@@ -526,11 +609,58 @@
     ];
 
     // ---------- STATE ----------
-    const SAVE_KEY = 'shadow-echo-v4';
+    const SAVE_KEY = 'shadow-echo-v5';
     let sanity = 83;
+    let clearance = 1;                       // 1 SURFACE → 2 DEEP STATE → 3 MYTHIC
+    let gameOver = false;
+    let endingKey = null;                    // which ending was reached
+    const discovered = new Set();            // node ids whose dossiers were opened
+    const playerConnections = [];            // [{s,t,label}] player-fused signals
+    let linkFrom = null;                     // id of node armed for fusing
     const activeLayers = new Set(['surface','deepstate','mythic']);
     const view = { x: 0, y: 0, scale: 1 };
     const nodeEls = {};
+
+    const DOC_NODES = NODES.filter(n => n.doc).map(n => n.id);   // recoverable documents
+    const CLEARANCE_NAMES = { 1:'SURFACE', 2:'DEEP STATE', 3:'MYTHIC' };
+
+    // Meaningful pairs — fusing these reveals hidden lore + restores sanity.
+    // Keyed order-independent ("a|b" sorted). Random pairs are pure risk/reward.
+    const FUSIONS = {
+      'mkultra|stlouis':  'PATTERN LOCKED: the same Chemical Corps logistics that gassed St. Louis ran MKULTRA field dosing. One supply chain. One signature.',
+      'mkultra|monarch':  'PATTERN LOCKED: MONARCH is the trauma-programming branch the 1973 burn was meant to erase. The lineage is intact in the gaps.',
+      'monarch|butterfly':'PATTERN LOCKED: the wing is the trigger. Repetition installs the key below awareness. You are looking at it now.',
+      'monarch|presidential':'PATTERN LOCKED: BETA models placed in the executive branch. The faces you trust were wired before you voted.',
+      'bluebeam|tarot':   'PATTERN LOCKED: Blue Beam is The Star — false light promised from above. The arcana was always the index.',
+      'tarot|butterfly':  'PATTERN LOCKED: The Moon governs the path between two towers — illusion, programming, the monarch road.',
+      'signal|mkultra':   'PATTERN LOCKED: the unhoused words leaked straight out of the 1977 finance-vault release. The Signal is the survivors.',
+      'handler|final':    'PATTERN LOCKED: the channel always terminated here. The Handler was routing you to the last door from the start.',
+      'foia|mkultra':     'PATTERN LOCKED: this door opened the legal way — a typed request, a refusal, a release. The record is real.',
+      'chemtrails|stlouis':'PATTERN LOCKED: aerosol dispersal over a civilian grid is a documented method, not a theory. Only the scale is disputed.',
+    };
+
+    // Handler Directives — the mission system.
+    // check(): returns true when complete. reward(): one-time payout.
+    const MISSIONS = [
+      { id:'m_recover3', text:'Recover 3 classified documents.', rewardText:'+ clearance progress',
+        check:()=> discovered.size >= 3 },
+      { id:'m_lineage', text:'Fuse MKULTRA → PROJECT MONARCH to map the programming lineage.', rewardText:'+8 sanity · MYTHIC unlock',
+        check:()=> hasFusion('mkultra','monarch'),
+        reward:()=>{ setSanity(sanity+8); } },
+      { id:'m_arcana', text:'Fuse BLUE BEAM → HOLLYWOOD TAROT. Confirm the false-light index.', rewardText:'+6 sanity',
+        check:()=> hasFusion('bluebeam','tarot'),
+        reward:()=>{ setSanity(sanity+6); } },
+      { id:'m_safehouse', text:'Reach THE SAFEHOUSE and recover your nerve.', rewardText:'sanity relief',
+        check:()=> discovered.has('safehouse') },
+      { id:'m_files7', text:'Recover 7 documents total — build the full case file.', rewardText:'+ clearance progress',
+        check:()=> discovered.size >= 7 },
+      { id:'m_final', text:'Open the FINAL TRANSMISSION. End the operation.', rewardText:'???',
+        check:()=> gameOver },
+    ];
+    const completedMissions = new Set();
+    function hasFusion(a, b) {
+      return playerConnections.some(e => (e.s===a&&e.t===b) || (e.s===b&&e.t===a));
+    }
 
     const world    = document.getElementById('world');
     const viewport = document.getElementById('viewport');
@@ -540,7 +670,12 @@
     function save() {
       const positions = {};
       NODES.forEach(n => positions[n.id] = { x: n.x, y: n.y });
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ sanity, positions, view }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        sanity, clearance, gameOver, endingKey, view, positions,
+        discovered: [...discovered],
+        playerConnections,
+        completedMissions: [...completedMissions],
+      }));
     }
     function load() {
       try {
@@ -548,8 +683,14 @@
         if (!raw) return;
         const d = JSON.parse(raw);
         if (typeof d.sanity === 'number') sanity = d.sanity;
+        if (typeof d.clearance === 'number') clearance = d.clearance;
+        if (typeof d.gameOver === 'boolean') gameOver = d.gameOver;
+        if (typeof d.endingKey === 'string') endingKey = d.endingKey;
         if (d.positions) NODES.forEach(n => { if (d.positions[n.id]) { n.x = d.positions[n.id].x; n.y = d.positions[n.id].y; } });
         if (d.view) Object.assign(view, d.view);
+        if (Array.isArray(d.discovered)) d.discovered.forEach(id => discovered.add(id));
+        if (Array.isArray(d.playerConnections)) d.playerConnections.forEach(e => playerConnections.push(e));
+        if (Array.isArray(d.completedMissions)) d.completedMissions.forEach(id => completedMissions.add(id));
       } catch(e) { /* corrupted leak, ignore */ }
     }
 
@@ -561,6 +702,7 @@
       fill.style.width = sanity + '%';
       fill.className = 'sanity-fill' + (sanity <= 20 ? ' crit' : sanity <= 45 ? ' warn' : '');
       updateSanityAudio(sanity);
+      updateDread(sanity);
       if (sanity === 0) onZeroSanity();
       save();
     }
@@ -568,10 +710,71 @@
       setSanity(sanity - amount);
     }
     function onZeroSanity() {
-      toast("SANITY DEPLETED. THEY HAVE YOU NOW.");
       audioPanic();
       document.querySelector('.scanlines').style.background =
         'repeating-linear-gradient(transparent 0, transparent 1px, rgba(120,0,0,0.5) 1px, rgba(120,0,0,0.5) 3px)';
+      triggerEndgame('zero');
+    }
+
+    // ---------- BRANCHING ENDGAME ----------
+    const ENDINGS = {
+      ABSORBED: { name:'ABSORBED', verdict:'You were the experiment.',
+        body:['The static stopped because you became it.',
+              'CLEARANCE REVOKED. The operation closes around the space where you used to be.',
+              'They never needed to catch you. They only needed you to keep opening doors.'] },
+      ARCHIVIST: { name:'THE ARCHIVIST', verdict:'You mapped the whole network — and lived.',
+        body:['Every dossier recovered. Every real pattern fused.',
+              'You walk out with the complete case file: what is on the public record, and the exact shape of the holes where the rest burned.',
+              'The myth was the index all along. You read it cover to cover.'] },
+      WHISTLEBLOWER: { name:'THE WHISTLEBLOWER', verdict:'You got enough out to matter.',
+        body:['Not everything. But enough real, filed, public record to make the silence expensive.',
+              'You file one last request before you go dark. Twenty working days. They have to answer.',
+              'Somewhere a redacted page is already being un-redacted.'] },
+      FORGOTTEN: { name:'THE FORGOTTEN', verdict:'You opened the last door too soon.',
+        body:['You reached the end before you understood the middle.',
+              'The pattern was right there in the connections you never fused.',
+              'The transmission ends. No one will remember you filed anything at all.'] },
+    };
+    function triggerEndgame(cause) {
+      if (gameOver) { showEnding(endingKey); return; }
+      gameOver = true;
+      const recovered = [...discovered].filter(id => DOC_NODES.includes(id)).length;
+      const patterns = playerConnections.filter(e => FUSIONS[[e.s,e.t].sort().join('|')]).length;
+
+      if (cause === 'zero') endingKey = 'ABSORBED';
+      else if (recovered >= 7 && patterns >= 3) endingKey = 'ARCHIVIST';
+      else if (patterns >= 1 || recovered >= 4) endingKey = 'WHISTLEBLOWER';
+      else endingKey = 'FORGOTTEN';
+
+      checkMissions();
+      audioPanic();
+      showEnding(endingKey);
+      save();
+    }
+    function showEnding(key) {
+      const ending = ENDINGS[key];
+      if (!ending) return;
+      const recovered = [...discovered].filter(id => DOC_NODES.includes(id)).length;
+      const fused = playerConnections.length;
+      const patterns = playerConnections.filter(e => FUSIONS[[e.s,e.t].sort().join('|')]).length;
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="ending">
+          <h2>FINAL TRANSMISSION</h2>
+          <div class="verdict">${ending.name}</div>
+          ${ending.body.map(l=>`<div class="doc-line">${l}</div>`).join('')}
+          <div class="reveal-tag" style="margin-top:14px">${ending.verdict}</div>
+          <div class="stat-grid">
+            <div>SANITY: <b>${sanity}%</b></div>
+            <div>CLEARANCE: <b>Lv.${clearance}</b></div>
+            <div>DOCUMENTS: <b>${recovered}/${DOC_NODES.length}</b></div>
+            <div>SIGNALS FUSED: <b>${fused}</b></div>
+            <div>PATTERNS LOCKED: <b>${patterns}</b></div>
+            <div>DIRECTIVES: <b>${completedMissions.size}/${MISSIONS.length}</b></div>
+          </div>
+          <button class="btn red" style="margin-top:14px;width:100%;text-align:center" onclick="reboot()">▶ RUN OPERATION AGAIN</button>
+        </div>`;
+      showModal();
     }
 
     // ---------- RENDER NODES ----------
@@ -588,6 +791,7 @@
           <div class="node-head">
             <span class="node-dot"></span>
             <span class="node-tag">${n.tag}</span>
+            <span class="node-link" title="Fuse signal from this node">⊕</span>
           </div>
           <div class="node-body">
             <div class="node-title">${n.title}</div>
@@ -600,8 +804,35 @@
         nodeEls[n.id] = el;
         positionNode(n);
         attachNodeDrag(el, n);
+        const linkBtn = el.querySelector('.node-link');
+        linkBtn.addEventListener('pointerdown', e => e.stopPropagation());
+        linkBtn.addEventListener('pointerup', e => e.stopPropagation());
+        linkBtn.addEventListener('click', e => { e.stopPropagation(); onLinkHandle(n); });
+        applyNodeLock(n);
       });
     }
+
+    // Mythic nodes stay ENCRYPTED until clearance is earned.
+    function applyNodeLock(n) {
+      const el = nodeEls[n.id];
+      if (!el) return;
+      const locked = isLocked(n);
+      el.dataset.locked = locked ? '1' : '0';
+      const titleEl = el.querySelector('.node-title');
+      const subEl = el.querySelector('.node-sub');
+      if (locked) {
+        titleEl.textContent = '▓▓ ENCRYPTED ▓▓';
+        titleEl.style.color = '#553355';
+        subEl.textContent = 'CLEARANCE Lv.2 REQUIRED';
+        el.style.filter = 'grayscale(0.6) brightness(0.7)';
+      } else {
+        titleEl.textContent = n.title;
+        titleEl.style.color = '';
+        subEl.textContent = n.sub;
+        el.style.filter = '';
+      }
+    }
+    function isLocked(n) { return n.layer === 'mythic' && clearance < 2 && !discovered.has(n.id); }
     function positionNode(n) {
       nodeEls[n.id].style.transform = `translate(${n.x}px, ${n.y}px)`;
     }
@@ -610,7 +841,8 @@
     const NODE_W = 210, NODE_H = 118, GRID_OFFSET = 5000;
     function renderEdges() {
       edgesSvg.innerHTML = '';
-      EDGES.forEach(e => {
+      const all = EDGES.concat(playerConnections.map(e => ({ ...e, fused: true })));
+      all.forEach(e => {
         const a = NODES.find(n => n.id === e.s), b = NODES.find(n => n.id === e.t);
         if (!a || !b) return;
         const visible = activeLayers.has(a.layer) && activeLayers.has(b.layer);
@@ -621,13 +853,13 @@
         const cx = mx + (by - ay) * 0.12, cy = my - (bx - ax) * 0.12;
         const path = document.createElementNS('http://www.w3.org/2000/svg','path');
         path.setAttribute('d', `M ${ax} ${ay} Q ${cx} ${cy} ${bx} ${by}`);
-        path.setAttribute('class', 'edge-path' + (e.hot ? ' hot' : ''));
+        path.setAttribute('class', 'edge-path' + (e.hot ? ' hot' : '') + (e.fused ? ' fused' : ''));
         path.style.opacity = visible ? '' : '0.08';
         edgesSvg.appendChild(path);
         if (e.label && visible) {
           const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
           lbl.setAttribute('x', cx); lbl.setAttribute('y', cy);
-          lbl.setAttribute('class', 'edge-label');
+          lbl.setAttribute('class', 'edge-label' + (e.fused ? ' fused' : ''));
           lbl.textContent = e.label;
           edgesSvg.appendChild(lbl);
         }
@@ -748,7 +980,18 @@
 
     // ---------- NODE INTERACTION ----------
     function openNode(n) {
+      if (gameOver) { showEnding(endingKey); return; }
+      if (isLocked(n)) {
+        toast('INSUFFICIENT CLEARANCE. Recover more documents to reach Lv.2.');
+        triggerStaticBurst(0.7);
+        return;
+      }
+      // The last door is the endgame, not a dossier.
+      if (n.type === 'terminal') { return triggerEndgame('opened'); }
+
       drainSanity(n.drain);
+      const firstTime = !discovered.has(n.id);
+      if (n.doc) { discovered.add(n.id); }
       maybeParanoia();
       if (n.type === 'recover') {
         handlerBeep();            // soft tone — the static drops here
@@ -756,9 +999,140 @@
         teletypeBurst(3 + Math.round(Math.abs(n.drain) / 4));
         triggerStaticBurst(Math.min(1.4, Math.abs(n.drain) / 9));
       }
+      if (firstTime) { updateProgress(); checkMissions(); }
       if (n.type === 'handler') return openHandler(n);
       if (n.type === 'recover') { toast("Signal dead zone. Sanity recovered."); }
       openDoc(n);
+    }
+
+    // ---------- PROGRESSION / CLEARANCE ----------
+    function updateProgress() {
+      // clearance climbs with documents recovered
+      const recovered = [...discovered].filter(id => DOC_NODES.includes(id)).length;
+      const newClear = recovered >= 7 ? 3 : recovered >= 3 ? 2 : 1;
+      const leveledUp = newClear > clearance;
+      clearance = Math.max(clearance, newClear);
+
+      document.getElementById('filesNum').textContent = recovered;
+      const lbl = document.getElementById('clearanceLabel');
+      lbl.innerHTML = `CLEARANCE <b>Lv.${clearance}</b> · ${CLEARANCE_NAMES[clearance]}`;
+
+      if (leveledUp) {
+        lbl.classList.remove('clearance-up'); void lbl.offsetWidth; lbl.classList.add('clearance-up');
+        toast(`CLEARANCE ELEVATED → Lv.${clearance} ${CLEARANCE_NAMES[clearance]}.`);
+        handlerBeep();
+        if (clearance >= 2) {
+          NODES.filter(n => n.layer === 'mythic').forEach(applyNodeLock);
+          toast('MYTHIC LAYER DECRYPTED. The arcana overlay is live.');
+        }
+      }
+      save();
+    }
+
+    function checkMissions() {
+      let changed = false;
+      MISSIONS.forEach(m => {
+        if (completedMissions.has(m.id)) return;
+        if (m.check()) {
+          completedMissions.add(m.id);
+          changed = true;
+          toast(`DIRECTIVE COMPLETE: ${m.text}`);
+          handlerBeep();
+          if (m.reward) m.reward();
+        }
+      });
+      if (changed) { renderDirectives(); save(); }
+    }
+
+    function renderDirectives() {
+      const body = document.getElementById('dirBody');
+      body.innerHTML = MISSIONS.map(m => {
+        const done = completedMissions.has(m.id);
+        return `<div class="dir-item ${done?'done':''}">
+          <span class="dir-check">${done?'☑':'☐'}</span>
+          <span>${m.text}<span class="dir-reward">⮡ ${m.rewardText}</span></span>
+        </div>`;
+      }).join('');
+      document.getElementById('dirCount').textContent = `${completedMissions.size}/${MISSIONS.length}`;
+    }
+
+    // ---------- FUSE SIGNALS (player-made connections) ----------
+    function toggleLinkMode() {
+      // Manual arm/disarm of fuse mode. Clears any pending source.
+      const active = document.body.classList.toggle('linking');
+      document.getElementById('linkBtn').classList.toggle('active', active);
+      if (!active) clearLinkSource();
+      else toast('FUSE MODE ARMED. Pick a source signal (⊕), then a target.');
+    }
+    function clearLinkSource() {
+      if (linkFrom && nodeEls[linkFrom]) nodeEls[linkFrom].classList.remove('link-source');
+      linkFrom = null;
+    }
+    function onLinkHandle(n) {
+      if (gameOver || isLocked(n)) return;
+      document.body.classList.add('linking');
+      document.getElementById('linkBtn').classList.add('active');
+      if (!linkFrom) {
+        linkFrom = n.id;
+        nodeEls[n.id].classList.add('link-source');
+        handlerBeep();
+        toast(`SIGNAL ORIGIN LOCKED: ${n.title}. Pick a target ⊕.`);
+        return;
+      }
+      if (linkFrom === n.id) { clearLinkSource(); toast('Origin released.'); return; }
+      fuseSignals(linkFrom, n.id);
+      clearLinkSource();
+    }
+    function alreadyConnected(a, b) {
+      const all = EDGES.concat(playerConnections);
+      return all.some(e => (e.s===a&&e.t===b) || (e.s===b&&e.t===a));
+    }
+    function fuseSignals(aId, bId) {
+      const a = NODES.find(n=>n.id===aId), b = NODES.find(n=>n.id===bId);
+      if (!a || !b) return;
+      if (alreadyConnected(aId, bId)) { toast('SIGNALS ALREADY FUSED.'); triggerStaticBurst(0.4); return; }
+
+      const key = [aId, bId].sort().join('|');
+      const lore = FUSIONS[key];
+      playerConnections.push({ s:aId, t:bId, label: lore ? '[PATTERN]' : '[NOISE]' });
+      renderEdges();
+      triggerStaticBurst(1.1);
+      teletypeBurst(8, 0.04);
+
+      if (lore) {
+        // Meaningful pattern — reveal hidden lore, restore sanity (reward).
+        setSanity(sanity + 8);
+        handlerBeep();
+        showFuseResult(true, `${a.title}  ⟶  ${b.title}`, lore, '+8 SANITY · PATTERN RECOGNIZED');
+      } else {
+        // Random fusion — risk/reward paranoia roll.
+        const lucky = Math.random() > 0.5;
+        if (lucky) {
+          setSanity(sanity + 4);
+          showFuseResult(true, `${a.title}  ⟶  ${b.title}`,
+            'Signals cross-talk into a faint, coherent hum. No clean pattern — but the noise steadies you for a moment.',
+            '+4 SANITY · WEAK SIGNAL');
+        } else {
+          setSanity(sanity - 12);
+          triggerStaticBurst(1.8);
+          showFuseResult(false, `${a.title}  ⟶  ${b.title}`,
+            'The lines feed back. A burst of white noise, a voice that is almost your own. Forcing a connection that was not there costs you.',
+            '−12 SANITY · PARANOIA SPIKE');
+          maybeParanoia();
+        }
+      }
+      checkMissions();
+      save();
+    }
+    function showFuseResult(good, pair, body, badge) {
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <h2 style="color:${good?'#00ddff':'#ff3333'}">${good?'⊕ SIGNAL FUSED':'⊗ SIGNAL BACKLASH'}</h2>
+        <div class="reveal-tag">${pair}</div>
+        <div class="doc-line" style="color:${good?'#00ddaa':'#ff8888'}">${body}</div>
+        <div class="reveal-tag" style="color:${good?'#00ff88':'#ff5555'};margin-top:14px">${badge}</div>
+        <button class="btn red" style="margin-top:18px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
+      showModal();
     }
 
     function openDoc(n) {
@@ -851,12 +1225,16 @@
     function transmit() {
       const report = {
         operation: 'SHADOW ECHO',
-        version: '4.1-declassified',
+        version: '5.0-declassified',
         generated: new Date().toISOString(),
         sanity,
+        clearance: `Lv.${clearance} ${CLEARANCE_NAMES[clearance]}`,
+        documentsRecovered: `${[...discovered].filter(id=>DOC_NODES.includes(id)).length}/${DOC_NODES.length}`,
+        directivesComplete: `${completedMissions.size}/${MISSIONS.length}`,
         activeLayers: [...activeLayers],
-        nodes: NODES.map(n => ({ id:n.id, layer:n.layer, type:n.type, title:n.title, x:Math.round(n.x), y:Math.round(n.y) })),
+        nodes: NODES.map(n => ({ id:n.id, layer:n.layer, type:n.type, title:n.title, x:Math.round(n.x), y:Math.round(n.y), recovered: discovered.has(n.id) })),
         connections: EDGES.map(e => `${e.s} -> ${e.t} ${e.label||''}`.trim()),
+        fusedSignals: playerConnections.map(e => `${e.s} -> ${e.t} ${e.label||''}`.trim()),
         foiaTrail: NODES.flatMap(n => (n.sources||[]).filter(s => s.url).map(s => ({ node:n.id, status:s.s, label:s.label, url:s.url }))),
       };
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -1073,14 +1451,163 @@
       triggerStaticBurst(2.5);
     }
 
+    /* =====================================================================
+       DREAD ENGINE — canvas grain + creeping shadow figures.
+       Intensity scales with lost sanity. Cheap: throttled, only draws when
+       there is dread to render.
+       ===================================================================== */
+    const dreadCanvas = document.getElementById('dread');
+    const dctx = dreadCanvas.getContext('2d');
+    let dreadLevel = 0;          // 0 sane → 1 gone
+    const figures = [];          // shadowy silhouettes lurking at the edges
+    function sizeDread() { dreadCanvas.width = innerWidth; dreadCanvas.height = innerHeight; }
+    sizeDread();
+    addEventListener('resize', sizeDread);
+
+    function updateDread(v) {
+      dreadLevel = 1 - Math.max(0, Math.min(1, v/100));
+      dreadCanvas.style.opacity = (dreadLevel * 0.8).toFixed(3);
+    }
+    function spawnFigure() {
+      const side = Math.random() < 0.5 ? 0 : 1;
+      figures.push({
+        x: side ? innerWidth - 40 - Math.random()*80 : 40 + Math.random()*80,
+        y: innerHeight * (0.4 + Math.random()*0.5),
+        w: 28 + Math.random()*26, h: 90 + Math.random()*70,
+        life: 0, max: 120 + Math.random()*120,
+      });
+    }
+    let dreadTick = 0;
+    function dreadLoop() {
+      requestAnimationFrame(dreadLoop);
+      dreadTick++;
+      if (dreadTick % 4 !== 0) return;          // ~15fps
+      const W = dreadCanvas.width, H = dreadCanvas.height;
+      dctx.clearRect(0, 0, W, H);
+      if (dreadLevel < 0.04) { figures.length = 0; return; }
+
+      // static grain — count scales with dread
+      const grains = Math.floor(dreadLevel * 900);
+      dctx.fillStyle = 'rgba(180,0,0,0.5)';
+      for (let i = 0; i < grains; i++) {
+        const r = Math.random();
+        dctx.fillStyle = r < 0.7 ? 'rgba(120,0,0,0.5)' : r < 0.9 ? 'rgba(0,120,0,0.4)' : 'rgba(180,180,180,0.4)';
+        dctx.fillRect(Math.random()*W, Math.random()*H, 2, 2);
+      }
+
+      // creeping red haze low-sanity
+      if (dreadLevel > 0.55) {
+        const g = dctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.75);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, `rgba(120,0,0,${(dreadLevel-0.55)*0.5})`);
+        dctx.fillStyle = g; dctx.fillRect(0, 0, W, H);
+      }
+
+      // shadow figures — only when things are bad, occasionally
+      if (dreadLevel > 0.45 && figures.length < 3 && Math.random() < 0.02 * dreadLevel) spawnFigure();
+      for (let i = figures.length - 1; i >= 0; i--) {
+        const f = figures[i];
+        f.life++;
+        const t = f.life / f.max;
+        const alpha = Math.sin(t * Math.PI) * 0.5 * dreadLevel;
+        dctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        dctx.beginPath();
+        dctx.ellipse(f.x, f.y - f.h*0.42, f.w*0.32, f.w*0.32, 0, 0, Math.PI*2); // head
+        dctx.fill();
+        dctx.fillRect(f.x - f.w/2, f.y - f.h*0.3, f.w, f.h*0.8);                 // body
+        if (f.life >= f.max) figures.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(dreadLoop);
+
+    // ---------- WHISPERS (low-sanity voice oscillator) ----------
+    function whisper() {
+      if (!audioReady() || gameOver) return;
+      if (Math.random() > dreadLevel * 0.6) return;   // only as you slip
+      const ctx = AUDIO.ctx, t = ctx.currentTime;
+      const dur = 0.6 + Math.random()*0.7;
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      const base = 90 + Math.random()*60;
+      osc.frequency.setValueAtTime(base, t);
+      osc.frequency.linearRampToValueAtTime(base * (0.8 + Math.random()*0.5), t + dur);
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 700 + Math.random()*500; bp.Q.value = 6;
+      const lfo = ctx.createOscillator();          // formant wobble = "voice"
+      lfo.frequency.value = 5 + Math.random()*6;
+      const lfoGain = ctx.createGain(); lfoGain.gain.value = 300;
+      lfo.connect(lfoGain).connect(bp.frequency);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05 * dreadLevel, t + dur*0.4);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(bp).connect(g).connect(AUDIO.master);
+      osc.start(t); lfo.start(t);
+      osc.stop(t + dur); lfo.stop(t + dur);
+    }
+    setInterval(whisper, 9000);
+
+    // ---------- PARANOIA DECISION EVENTS ----------
+    // Occasional forced choices. Each option is a sanity gamble.
+    const DECISIONS = [
+      { q:'A black SUV idles across the street. Engine running. No one gets out.',
+        a:[ { t:'Close the blinds. Keep reading.', d:-4, m:'You pretend you didn\'t see it. It saw you.' },
+            { t:'Step out and photograph the plate.', d:+6, m:'It pulls away. You have the plate. Small victory.' } ] },
+      { q:'The Handler is requesting an out-of-band voice channel. Unscheduled.',
+        a:[ { t:'Answer it.', d:-9, m:'A voice that is almost yours reads your own address back to you.' },
+            { t:'Pull the battery.', d:+5, m:'Dead air. The static drops. You can breathe.' } ] },
+      { q:'You find a node in your own handwriting that you do not remember adding.',
+        a:[ { t:'Open it.', d:-10, m:'It\'s a memory you were supposed to have lost. Now it\'s leaking.' },
+            { t:'Leave it sealed.', d:-2, m:'You walk past it. It\'s still there. It\'s always there.' } ] },
+      { q:'A toast appeared one second before you triggered it. The cursor moved first.',
+        a:[ { t:'Keep working. Coincidence.', d:-6, m:'You don\'t believe yourself.' },
+            { t:'Reboot the channel.', d:+3, m:'The lag clears. For now.' } ] },
+      { q:'Someone screenshotted this session. You felt the shutter.',
+        a:[ { t:'Transmit the field report first.', d:+4, m:'If it leaks, let it leak on your terms.' },
+            { t:'Wipe everything.', d:-5, m:'Your hand hovers over REBOOT. You don\'t. You never do.' } ] },
+    ];
+    function modalOpen() { return document.getElementById('modalBg').classList.contains('show'); }
+    function maybeDecision() {
+      if (gameOver || modalOpen()) return;
+      // more likely as sanity falls; never certain
+      const chance = 0.12 + (1 - sanity/100) * 0.28;
+      if (Math.random() > chance) return;
+      const d = DECISIONS[Math.floor(Math.random()*DECISIONS.length)];
+      triggerStaticBurst(0.9);
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <div class="decision">
+          <h2 style="color:#ffaa00">⚠ PARANOIA EVENT</h2>
+          <div class="doc-line warn">${d.q}</div>
+          <div class="choice-row">
+            ${d.a.map((opt,i)=>`<button class="btn" onclick="resolveDecision(${DECISIONS.indexOf(d)},${i})">${opt.t}</button>`).join('')}
+          </div>
+        </div>`;
+      showModal();
+    }
+    function resolveDecision(di, ai) {
+      const opt = DECISIONS[di].a[ai];
+      setSanity(sanity + opt.d);
+      const sign = opt.d >= 0 ? '+' : '';
+      toast(`${opt.m}  [${sign}${opt.d} SANITY]`);
+      opt.d < 0 ? triggerStaticBurst(1.2) : handlerBeep();
+      closeModal();
+    }
+
     // ---------- SLOW PASSIVE DRAIN ----------
-    setInterval(() => { if (sanity > 0) setSanity(sanity - 1); }, 12000);
+    setInterval(() => { if (sanity > 0 && !gameOver) setSanity(sanity - 1); }, 12000);
+    // periodic chance of a forced decision
+    setInterval(maybeDecision, 21000);
 
     // ---------- BOOT ----------
     load();
+    document.getElementById('filesTotal').textContent = DOC_NODES.length;
     buildNodes();
     renderEdges();
     setSanity(sanity);
+    updateProgress();
+    renderDirectives();
+    if (gameOver && endingKey) showEnding(endingKey);
     if (view.x === 0 && view.y === 0 && view.scale === 1) resetView(); else applyView();
 
     // ---------- AUDIO BOOT ----------
@@ -1094,9 +1621,9 @@
     }
 
     // boot toasts
-    setTimeout(() => toast("LEVEL 7 CLEARANCE GRANTED."), 400);
-    setTimeout(() => toast("They told you these were just theories."), 1600);
-    setTimeout(() => toast("Some of it is on the public record. Open the FOIA VAULT."), 3000);
+    setTimeout(() => toast(`CLEARANCE Lv.${clearance} ${CLEARANCE_NAMES[clearance]}. Recover documents to ascend.`), 400);
+    setTimeout(() => toast("HANDLER DIRECTIVES uplinked. Check the panel, left."), 1600);
+    setTimeout(() => toast("⊕ FUSE two signals to find hidden patterns — but forcing a bad link costs you."), 3000);
     </script>
 </body>
 </html>

@@ -28,6 +28,29 @@ glitch, and creeping paranoia.
   honest about where the paper trail actually stops, and on-theme about the silence.
   A dedicated **FOIA VAULT** node hubs the real archives (CIA Reading Room, National
   Security Archive, The Black Vault, the JFK records, FOIA.gov).
+- **Clearance progression** — a single-player ARG loop layered over the map.
+  Recovering documents raises your **CLEARANCE** (`Lv.1 SURFACE → Lv.2 DEEP STATE →
+  Lv.3 MYTHIC`). The MYTHIC nodes stay `▓▓ ENCRYPTED ▓▓` until you earn Lv.2 —
+  reach it and the arcana overlay decrypts live.
+- **Leaked-files counter** — a persistent `DOCUMENTS X/Y RECOVERED` HUD tracking
+  every dossier you've opened.
+- **Fuse signals (player-made connections)** — arm `⊕ FUSE`, pick a source node's
+  `⊕` handle, then a target, to draw your own edge. Hitting a **real pattern**
+  (MKULTRA→MONARCH, BLUE BEAM→TAROT, …) reveals hidden lore and restores sanity;
+  forcing a meaningless link is a paranoia gamble that can spike or drain you.
+  Fused edges render as cyan dashed signal-lines distinct from the canon edges.
+- **Handler Directives** — a live mission panel (top-left). Recover N documents,
+  fuse specific patterns, reach the Safehouse, open the FINAL TRANSMISSION. Each
+  completion pays out sanity and/or progression.
+- **Branching endgame** — opening the FINAL TRANSMISSION (or hitting zero sanity)
+  ends the run with one of four outcomes — `ABSORBED`, `THE ARCHIVIST`,
+  `THE WHISTLEBLOWER`, `THE FORGOTTEN` — chosen from documents recovered,
+  patterns fused, and final sanity, with a full stat readout. `REBOOT` to replay.
+- **Paranoia decision events** — timed forced choices ("a black SUV idles
+  outside…") where each option is a sanity gamble. More frequent as sanity falls.
+- **Escalating dread** — a sanity-reactive canvas overlay layers static grain, a
+  red haze, and shadowy figures creeping in at the edges as you slip. The audio
+  bed gains low-sanity *whispers* (band-passed, LFO-wobbled "voice" oscillators).
 - **Layer toggle** — `SURFACE → DEEP STATE → MYTHIC`. Filter the constellation by reality layer.
 - **TRANSMIT** — export the current map state + connections as a JSON field report.
 - **Signal audio** — toggleable procedural Web Audio bed (low detuned drone +
@@ -75,6 +98,10 @@ that actually have a public record. Fictional programs get `denied`.
 - Add-node-on-the-fly authoring ("unhoused words" publishing)
 - ~~Audio: teletype + static bed~~ ✓ shipped
 - ~~FOIA trail: real declassified-document links per node~~ ✓ shipped
+- ~~Game loop: clearance progression, fuse-signal connections, handler
+  directives, branching endgame, paranoia decisions, dread overlay~~ ✓ shipped (v5.0)
 - Audio next: `AnalyserNode`-driven glitch sync, WaveShaper escalation tuning
 - FOIA next: in-modal document preview pane, per-node request-status timeline
+- Game next: more fusion patterns + procedurally-generated nodes from chains,
+  PNG export of field reports, multi-run "corrupted node" replay tension
 - Next.js + React Flow migration for shared "leaks" via Supabase
