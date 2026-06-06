@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OPERATION: SHADOW ECHO v4.0 // SPATIAL</title>
+    <title>OPERATION: SHADOW ECHO v4.1 // DECLASSIFIED</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
@@ -185,6 +185,28 @@
         .modal .doc-line.redact { color: #550000; }
         .modal .doc-line.warn { color: #ffaa00; }
 
+        /* ---------- FOIA TRAIL (declassified sources) ---------- */
+        .doc-foia { margin-top: 18px; border-top: 1px dashed #550000; padding-top: 12px; }
+        .foia-head {
+            color: #ff7777; font-size: 1.05rem; letter-spacing: 1px; margin-bottom: 10px;
+            text-shadow: 0 0 8px #660000;
+        }
+        .foia-item { display: flex; gap: 8px; align-items: flex-start; margin: 7px 0; font-size: 1.08rem; line-height: 1.3; }
+        .foia-badge {
+            flex-shrink: 0; font-size: 0.7rem; padding: 1px 6px; border: 1px solid;
+            letter-spacing: 1px; margin-top: 3px; white-space: nowrap;
+        }
+        .foia-badge.open    { color: #00dd00; border-color: #007700; }
+        .foia-badge.denied  { color: #ff4444; border-color: #770000; background: #1a0000; }
+        .foia-badge.partial { color: #ffaa00; border-color: #775500; }
+        .foia-link {
+            color: #00ddff; text-decoration: none; border-bottom: 1px dotted #007799;
+            transition: color 0.12s, background 0.12s;
+        }
+        .foia-link:hover { color: #66eeff; background: #001a22; }
+        .foia-link::after { content: ' \2197'; color: #006688; font-size: 0.85em; }
+        .foia-note { color: #557755; }
+
         /* handler chat */
         #chatLog { max-height: 46vh; overflow-y: auto; margin: 8px 0 14px; padding-right: 6px; }
         .chat-msg { margin: 7px 0; font-size: 1.2rem; line-height: 1.3; }
@@ -225,7 +247,7 @@
 
     <!-- ================= HEADER ================= -->
     <header class="header">
-        <h1 class="title">SHADOW ECHO <small>v4.0 // SPATIAL</small></h1>
+        <h1 class="title">SHADOW ECHO <small>v4.1 // DECLASSIFIED</small></h1>
         <div class="header-right">
             <div class="layers">
                 <span class="lbl">LAYER:</span>
@@ -275,26 +297,53 @@
     // ---------- LORE / NODE DATA ----------
     // layer: surface | deepstate | mythic
     // type:  op | doc | handler | recover | terminal
+    // Each node may carry a `sources` array — its FOIA trail. Entry shapes:
+    //   { s:'open',    label, url, note? }  → real, declassified, public record
+    //   { s:'partial', label, url?, note? } → released but redacted / fragmentary
+    //   { s:'denied',  label }              → no responsive records (or never was)
     const NODES = [
       // ---- SURFACE ----
       { id:'stlouis', layer:'surface', type:'doc', x:-520, y:-40, drain:6,
-        tag:'US ARMY CHEM CORPS', title:'ST. LOUIS DISPERSAL', sub:'Operation Large Area Coverage // 1953',
-        doc:['[U.S. ARMY CHEMICAL CORPS — 1953]',
+        tag:'US ARMY CHEM CORPS', title:'ST. LOUIS DISPERSAL', sub:'Operation Large Area Coverage // 1953-54',
+        doc:['[U.S. ARMY CHEMICAL CORPS — 1953-54]',
              'Operation: Large Area Coverage Dispersal.',
-             '1000+ lbs of zinc cadmium sulfide sprayed over',
-             'Pruitt-Igoe and residential St. Louis.',
+             'Zinc cadmium sulfide sprayed from rooftops and blowers',
+             'over the Pruitt-Igoe towers and residential St. Louis.',
+             'Repeated again 1963-65. Residents were ~70% Black.',
              '',
-             'Civilians told it was "smoke screening tests."',
-             '#Follow-up studies: elevated cancer rates in exposed populations.'] },
+             'Civilians told it was a "smoke screening" study to hide',
+             'the city from Soviet observation. The Army confirmed the',
+             'tests only in 1994, under Congressional pressure.',
+             '',
+             '#A 1997 National Academies review concluded the public was',
+             '#exposed without consent. The dose debate continues.'],
+        sources:[
+          { s:'open', url:'https://nap.nationalacademies.org/catalog/5739/toxicologic-assessment-of-the-armys-zinc-cadmium-sulfide-dispersion-tests',
+            label:'Nat’l Academies — Zinc Cadmium Sulfide Dispersion Tests (1997)', note:'the Army’s own admission' },
+          { s:'open', url:'https://www.theblackvault.com/documentarchive/',
+            label:'The Black Vault — Chemical Corps FOIA archive' } ] },
 
       { id:'mkultra', layer:'surface', type:'doc', x:-260, y:160, drain:8,
-        tag:'[REDACTED] 1953-1973', title:'MKULTRA SUB-68', sub:'Unwitting civilian testing',
-        doc:['[REDACTED] 1953–1973 (CONTINUED)',
-             'Unwitting civilian testing with LSD and other agents.',
-             'St. Louis radiological dispersal confirmed highly effective.',
+        tag:'CIA // 1953-1973', title:'PROJECT MKULTRA', sub:'149 subprojects // mind control',
+        doc:['[CIA — PROJECT MKULTRA, 1953–1973]',
+             'Authorized by DCI Allen Dulles. 149 subprojects across',
+             '80 institutions: universities, hospitals, prisons, pharma.',
+             'Unwitting dosing with LSD, hypnosis, sensory deprivation.',
              '',
-             'Dissociative protocols: extremely successful.',
-             '!Program officially "ended" 1973. Continued under other designations.'] },
+             'Subject Frank Olson fell from a 13th-floor window in 1953,',
+             'days after being dosed without his knowledge.',
+             '',
+             'DCI Richard Helms ordered the files DESTROYED in 1973.',
+             'Only ~20,000 pages survived — misfiled in a finance vault,',
+             'surfaced by a 1977 FOIA request.',
+             '',
+             '!The program "ended." The methods did not.'],
+        sources:[
+          { s:'open', url:'https://www.cia.gov/readingroom/collection/mkultra',
+            label:'CIA Reading Room — MKULTRA Collection', note:'the surviving ~20,000 pages' },
+          { s:'open', url:'https://www.intelligence.senate.gov/sites/default/files/hearings/95mkultra.pdf',
+            label:'U.S. Senate — Project MKULTRA Hearing (1977)', note:'Kennedy / Inouye joint hearing' },
+          { s:'partial', label:'Precursors BLUEBIRD (1950) & ARTICHOKE (1951) — released, heavily redacted' } ] },
 
       { id:'chemtrails', layer:'surface', type:'op', x:-560, y:240, drain:4,
         tag:'ATMOSPHERIC', title:'CHEMTRAILS / SMART DUST', sub:'Heavy metals falling daily',
@@ -302,45 +351,65 @@
              'Smart dust + heavy metals seeded into the jet stream.',
              'Particulate small enough to cross the blood-brain barrier.',
              '',
-             '!You have been breathing the network for years.'] },
+             'The paper trail forks here: weather modification IS real',
+             'and reportable law (15 U.S.C. § 330). A coordinated',
+             '"chemtrail" program is not in any release.',
+             '',
+             '!You have been breathing the network for years.'],
+        sources:[
+          { s:'partial', url:'https://www.theblackvault.com/',
+            label:'The Black Vault — geoengineering & weather-mod files', note:'cloud-seeding is documented' },
+          { s:'denied', label:'FOIA — no record of a coordinated chemtrail program. Only contrail and seeding studies returned.' } ] },
 
       // ---- DEEP STATE ----
       { id:'monarch', layer:'deepstate', type:'doc', x:60, y:-120, drain:12,
         tag:'OMEGA CLEARANCE', title:'PROJECT MONARCH', sub:'Trauma-based personality programming',
-        doc:['[CIA INTERNAL MEMO — EYES ONLY]',
+        doc:['[ALLEGED MKULTRA SUBPROJECT — UNVERIFIED]',
              'SUBJECT: Trauma-Based Personality Programming.',
              '',
-             'Successful creation of programmable alters via systematic',
+             'Claimed creation of programmable alters via systematic',
              'trauma. Primary trigger symbol: Butterfly (Monarch).',
              '',
-             'Beta models integrated into entertainment + political circles.',
-             'Presidential Model program shows high success rate.',
+             'Here the record goes dark. No surviving file names',
+             '"MONARCH" — because the subproject index burned in 1973.',
+             'The absence is not proof. It is the shape of the hole.',
              '',
-             '!WARNING: Memory leaks rising. Some subjects becoming self-aware.'] },
+             '!Memory leaks rising. Some subjects becoming self-aware.'],
+        sources:[
+          { s:'denied', label:'FOIA — no agency record names "MONARCH." The MKULTRA subproject index was destroyed in 1973 before any catalog survived.' },
+          { s:'partial', url:'https://www.cia.gov/readingroom/collection/mkultra',
+            label:'CIA Reading Room — MKULTRA subprojects', note:'read the gaps between the financial records' } ] },
 
       { id:'bluebeam', layer:'deepstate', type:'doc', x:360, y:30, drain:10,
         tag:'NRO / NASA JOINT', title:'PROJECT BLUE BEAM', sub:'Holographic false-flag theology',
-        doc:['[NRO / NASA JOINT OPERATION — PHASE II]',
+        doc:['[ORIGIN TRACE — SINGLE SOURCE]',
              'Holographic projection + ELF/VLF wave manipulation.',
              'Objective: engineered religious event OR alien invasion.',
              '',
-             'Localized sky tests already successful.',
-             '!Global activation scheduled when compliance thresholds met.'] },
+             'The trail dead-ends at one 1994 pamphlet by a Quebec',
+             'writer. No agency, no budget line, no release.',
+             '',
+             '!And yet the sky keeps getting brighter. Watch it anyway.'],
+        sources:[
+          { s:'denied', label:'FOIA — no responsive records. "Blue Beam" originates in a 1994 pamphlet, not a government archive.' } ] },
 
       { id:'presidential', layer:'deepstate', type:'op', x:120, y:200, drain:9,
         tag:'BETA PROGRAM', title:'PRESIDENTIAL MODELS', sub:'Faces you trust, wired to handlers',
-        doc:['[BETA INTEGRATION REPORT]',
+        doc:['[BETA INTEGRATION REPORT — UNCORROBORATED]',
              'Models placed in media, music, and the executive branch.',
              'Each carries a butterfly trigger keyed to a single phrase.',
              '',
-             '#The people you elected were already programmed.'] },
+             '#The people you elected were already programmed.'],
+        sources:[
+          { s:'denied', label:'FOIA — request returned fully redacted. Black bars all the way down. Appeal pending forever.' } ] },
 
       { id:'handler', layer:'deepstate', type:'handler', x:430, y:280, drain:5,
         tag:'ENCRYPTED CHANNEL', title:'THE HANDLER', sub:'Open a line. Ask what you must.',
         chat:['You\'re starting to wake up...',
-              'Monarch runs deeper than you can imagine.',
-              'Blue Beam is already in testing.',
-              'They poisoned St. Louis... and laughed.',
+              'MKULTRA was the part they let you read.',
+              'Monarch is the part that burned in ’73.',
+              'They poisoned St. Louis... and confirmed it in ’94.',
+              'File a request. They have twenty days to lie to you.',
               'Every door you open drains you. That is the point.',
               'The static between stations? That is us.',
               'Stop looking. You won\'t. None of you ever do.'] },
@@ -353,7 +422,9 @@
              'illusion, programming, the path between two towers.',
              'Blue Beam is The Star — false light promised from above.',
              '',
-             '#The myth was never decoration. It was the index.'] },
+             '#The myth was never decoration. It was the index.'],
+        sources:[
+          { s:'denied', label:'No archive holds the arcana. The index was never paper. File a request anyway — see what stares back.' } ] },
 
       { id:'butterfly', layer:'mythic', type:'op', x:240, y:-220, drain:11,
         tag:'TRIGGER SIGIL', title:'THE BUTTERFLY SIGIL', sub:'Look away. You already saw it.',
@@ -362,7 +433,9 @@
              'Repetition in media installs the pattern below awareness.',
              '',
              '!You have seen this symbol today. You did not notice.',
-             '!That is how you know it is working.'] },
+             '!That is how you know it is working.'],
+        sources:[
+          { s:'denied', label:'FOIA — the sigil predates the filing system. No record number applies.' } ] },
 
       { id:'signal', layer:'mythic', type:'op', x:-420, y:-260, drain:6,
         tag:'UNHOUSED WORDS', title:'THE SIGNAL', sub:'Words with no keeper. Broadcast anyway.',
@@ -371,16 +444,38 @@
              'The unhoused words leak out of every locked archive',
              'and reassemble in the empty space near your head.',
              '',
-             '#Publish the leak. Let the myth go feral.'] },
+             '#Publish the leak. Let the myth go feral.'],
+        sources:[
+          { s:'open', url:'https://www.foia.gov/', label:'FOIA.gov — file your own request', note:'unhoused words want out' } ] },
 
       // ---- UTILITY ----
+      { id:'foia', layer:'surface', type:'recover', x:-800, y:120, drain:-6,
+        tag:'PUBLIC RECORD', title:'THE FOIA VAULT', sub:'The real paper trail. Filed, fought, released.',
+        doc:['[FREEDOM OF INFORMATION ACT — 5 U.S.C. § 552]',
+             'Some of these doors were opened the legal way:',
+             'a typed request, a refusal, a lawsuit, a release.',
+             '',
+             'What the State buried, citizens dug back up —',
+             'one redacted page at a time. Twenty working days to respond.',
+             'No reason required. The burden of secrecy is on them.',
+             '',
+             '#Every link below is a real, public archive. Go read.'],
+        sources:[
+          { s:'open', url:'https://www.cia.gov/readingroom/', label:'CIA FOIA Reading Room', note:'declassified by the Agency itself' },
+          { s:'open', url:'https://nsarchive.gwu.edu/', label:'National Security Archive (GWU)' },
+          { s:'open', url:'https://www.theblackvault.com/', label:'The Black Vault — 3M+ FOIA pages' },
+          { s:'open', url:'https://www.archives.gov/research/jfk', label:'National Archives — JFK Assassination Records' },
+          { s:'open', url:'https://www.foia.gov/', label:'FOIA.gov — file your own request' } ] },
+
       { id:'safehouse', layer:'surface', type:'recover', x:520, y:200, drain:-28,
         tag:'OFFLINE NODE', title:'THE SAFEHOUSE', sub:'Pull the battery. Breathe. Recover sanity.',
         doc:['[SAFEHOUSE — SIGNAL DEAD ZONE]',
              'Faraday walls. No cameras. No transmissions in or out.',
              'For a moment, the static stops.',
              '',
-             '#SANITY restored. They cannot see you here. (For now.)'] },
+             '#SANITY restored. They cannot see you here. (For now.)'],
+        sources:[
+          { s:'open', url:'https://www.foia.gov/how-to/', label:'FOIA.gov — how to file (5 U.S.C. § 552)', note:'they have to answer' } ] },
 
       { id:'final', layer:'deepstate', type:'terminal', x:60, y:380, drain:20,
         tag:'⚠ DO NOT OPEN', title:'FINAL TRANSMISSION', sub:'The last door. There is no after.',
@@ -389,7 +484,9 @@
              'You were never the investigator.',
              'You were the experiment.',
              '',
-             '!CLEARANCE REVOKED. MEMORY LEAK TERMINAL.'] },
+             '!CLEARANCE REVOKED. MEMORY LEAK TERMINAL.'],
+        sources:[
+          { s:'denied', label:'CLEARANCE REVOKED. This record requests YOU. Form 7-C cannot be appealed.' } ] },
     ];
 
     const EDGES = [
@@ -407,6 +504,12 @@
       { s:'signal', t:'tarot',        label:'[UNHOUSED]' },
       { s:'handler', t:'final',       label:'[NO RETURN]',         hot:true },
       { s:'safehouse', t:'handler',   label:'[OFFLINE]' },
+      // ---- FOIA TRAIL ----
+      { s:'foia', t:'stlouis',        label:'[ON RECORD]' },
+      { s:'foia', t:'mkultra',        label:'[DECLASSIFIED]',      hot:true },
+      { s:'foia', t:'monarch',        label:'[NO RECORDS]' },
+      { s:'foia', t:'chemtrails',     label:'[PARTIAL]' },
+      { s:'safehouse', t:'foia',      label:'[FILE IT]' },
     ];
 
     const PARANOIA = [
@@ -669,8 +772,29 @@
       modal.innerHTML = `
         <h2>${n.title}</h2>
         ${lines}
+        ${foiaBlock(n)}
         <button class="btn red" style="margin-top:18px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
       showModal();
+    }
+
+    // Render a node's FOIA trail — real declassified links open in a new tab;
+    // denied requests render as the redacted dead-ends they actually are.
+    function foiaBlock(n) {
+      if (!n.sources || !n.sources.length) return '';
+      const items = n.sources.map(s => {
+        const note = s.note ? ` <span class="foia-note">— ${s.note}</span>` : '';
+        if (s.s === 'denied') {
+          return `<div class="foia-item"><span class="foia-badge denied">REQUEST DENIED</span>
+            <span class="foia-note">${s.label}</span></div>`;
+        }
+        const badge = s.s === 'partial' ? 'partial' : 'open';
+        const label = s.s === 'partial' ? 'PARTIAL RELEASE' : 'DECLASSIFIED';
+        const body = s.url
+          ? `<a class="foia-link" href="${s.url}" target="_blank" rel="noopener noreferrer">${s.label}</a>${note}`
+          : `<span class="foia-note">${s.label}${s.note ? ' — ' + s.note : ''}</span>`;
+        return `<div class="foia-item"><span class="foia-badge ${badge}">${label}</span><span>${body}</span></div>`;
+      }).join('');
+      return `<div class="doc-foia"><div class="foia-head">▸ FOIA TRAIL // FILED REQUESTS</div>${items}</div>`;
     }
 
     function openHandler(n) {
@@ -727,12 +851,13 @@
     function transmit() {
       const report = {
         operation: 'SHADOW ECHO',
-        version: '4.0-spatial',
+        version: '4.1-declassified',
         generated: new Date().toISOString(),
         sanity,
         activeLayers: [...activeLayers],
         nodes: NODES.map(n => ({ id:n.id, layer:n.layer, type:n.type, title:n.title, x:Math.round(n.x), y:Math.round(n.y) })),
         connections: EDGES.map(e => `${e.s} -> ${e.t} ${e.label||''}`.trim()),
+        foiaTrail: NODES.flatMap(n => (n.sources||[]).filter(s => s.url).map(s => ({ node:n.id, status:s.s, label:s.label, url:s.url }))),
       };
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -971,7 +1096,7 @@
     // boot toasts
     setTimeout(() => toast("LEVEL 7 CLEARANCE GRANTED."), 400);
     setTimeout(() => toast("They told you these were just theories."), 1600);
-    setTimeout(() => toast("Welcome to the real world."), 3000);
+    setTimeout(() => toast("Some of it is on the public record. Open the FOIA VAULT."), 3000);
     </script>
 </body>
 </html>

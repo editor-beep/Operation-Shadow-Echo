@@ -20,6 +20,14 @@ glitch, and creeping paranoia.
 - **The Handler** — open an encrypted chat channel and transmit queries for answers.
 - **Paranoia events** — random environmental dread triggered by interaction.
 - **Document viewer** — classified memos pulled from the lore, with redaction styling.
+- **FOIA trail** — every dossier carries a *filed-requests* footer linking the real,
+  public record. Programs that genuinely declassified (MKULTRA, the St. Louis zinc
+  cadmium sulfide tests) link straight to the CIA Reading Room, the 1977 Senate
+  hearing, and the National Academies review with a `DECLASSIFIED` badge. The
+  purely-mythic nodes (Monarch, Blue Beam) instead show a `REQUEST DENIED` dead-end —
+  honest about where the paper trail actually stops, and on-theme about the silence.
+  A dedicated **FOIA VAULT** node hubs the real archives (CIA Reading Room, National
+  Security Archive, The Black Vault, the JFK records, FOIA.gov).
 - **Layer toggle** — `SURFACE → DEEP STATE → MYTHIC`. Filter the constellation by reality layer.
 - **TRANSMIT** — export the current map state + connections as a JSON field report.
 - **Signal audio** — toggleable procedural Web Audio bed (low detuned drone +
@@ -50,10 +58,23 @@ Narrative seed data lives in `messages.json` and inline in `index.html` (the
 `NODES` / `EDGES` arrays). Add nodes by pushing to those arrays — `layer`,
 `type`, `x`, `y`, `drain`, `title`, `sub`, and a `doc` (or `chat`) payload.
 
+A node may also carry a `sources` array — its FOIA trail. Each entry is one of:
+
+```js
+{ s:'open',    label, url, note? }  // real, declassified, links out with a DECLASSIFIED badge
+{ s:'partial', label, url?, note? } // released but redacted / fragmentary
+{ s:'denied',  label }              // no responsive records (or never existed) — REQUEST DENIED
+```
+
+Keep the `open`/`partial` links honest: only point real declassified URLs at nodes
+that actually have a public record. Fictional programs get `denied`.
+
 ## Roadmap
 
 - Custom node typewriter reveal + per-node scanline overlays
 - Add-node-on-the-fly authoring ("unhoused words" publishing)
 - ~~Audio: teletype + static bed~~ ✓ shipped
+- ~~FOIA trail: real declassified-document links per node~~ ✓ shipped
 - Audio next: `AnalyserNode`-driven glitch sync, WaveShaper escalation tuning
+- FOIA next: in-modal document preview pane, per-node request-status timeline
 - Next.js + React Flow migration for shared "leaks" via Supabase
