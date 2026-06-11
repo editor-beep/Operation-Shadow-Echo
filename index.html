@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OPERATION: SHADOW ECHO v5.0 // DECLASSIFIED</title>
+    <title>OPERATION: SHADOW ECHO v6.0 // DECLASSIFIED</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
@@ -308,6 +308,60 @@
         .ending .stat-grid div { font-size: 1.1rem; color: #00bb88; }
         .ending .stat-grid b { color: #00ffcc; }
         .reveal-tag { color: #00ddff; font-size: 1.05rem; letter-spacing: 1px; margin: 4px 0 10px; }
+
+        /* ---------- TYPEWRITER DOC REVEAL ---------- */
+        .doc-tw .doc-line { opacity: 0; transform: translateY(3px); transition: opacity 0.15s, transform 0.15s; }
+        .doc-tw .doc-line.on { opacity: 1; transform: none; }
+
+        /* ---------- CIPHER INTERCEPT ---------- */
+        .cipher-text {
+            font-size: 1.45rem; letter-spacing: 2px; color: #ffaa00;
+            background: #0a0600; border: 1px dashed #775500; padding: 12px 14px;
+            margin: 12px 0; line-height: 1.45; word-wrap: break-word;
+            transition: color 0.3s, border-color 0.3s;
+        }
+        .cipher-text.clean { color: #00ff88; border-color: #007744; text-shadow: 0 0 10px rgba(0,200,100,0.5); }
+        .cipher-ctrl { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 12px 0; }
+        .cipher-ctrl .rot { color: #00ddff; font-size: 1.35rem; min-width: 86px; text-align: center; }
+
+        /* ---------- HANDLER INPUT ---------- */
+        #handlerInput {
+            flex: 2; min-width: 0; background: #020a06; border: 2px solid #00aa66;
+            color: #00ffaa; font-family: 'VT323', monospace; font-size: 1.15rem;
+            padding: 7px 10px; outline: none;
+        }
+        #handlerInput::placeholder { color: #066; }
+        #handlerInput:focus { border-color: #00ffaa; box-shadow: 0 0 12px rgba(0,200,120,0.4); }
+
+        /* ---------- CORRUPTED NODE (replay tension) ---------- */
+        .node.corrupted { border-color: #cc00cc !important; }
+        .node.corrupted .node-dot { background: #ff66ff; }
+        .node.corrupted .node-tag::after { content: ' ▓CORRUPT'; color: #ff66ff; }
+        .node.corrupted { animation: corruptpulse 1.1s infinite; }
+        @keyframes corruptpulse {
+            0%,100% { box-shadow: 0 0 16px rgba(120,0,120,0.7); }
+            50% { box-shadow: 0 0 36px #cc00cc; }
+        }
+
+        /* ---------- INTEL HUD ---------- */
+        .intel-label { font-size: 0.78rem; color: #cc8822; letter-spacing: 1px; }
+        .intel-label b { color: #ffcc66; }
+        .intel-flash { animation: clearflash 0.7s 1; }
+
+        /* ---------- CHAIN BANNER ---------- */
+        .chain-pop {
+            position: fixed; top: 38%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 9700; pointer-events: none; color: #00ffcc; font-size: 2.6rem;
+            letter-spacing: 4px; text-shadow: 0 0 24px #00aa88, 0 0 60px #00ffcc;
+            animation: chainpop 1.4s ease forwards;
+        }
+        @keyframes chainpop {
+            0% { opacity: 0; transform: translate(-50%,-50%) scale(0.6); }
+            18% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+            30% { transform: translate(-50%,-50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%,-62%) scale(1.05); }
+        }
     </style>
 </head>
 <body>
@@ -325,7 +379,7 @@
 
     <!-- ================= HEADER ================= -->
     <header class="header">
-        <h1 class="title">SHADOW ECHO <small>v4.1 // DECLASSIFIED</small></h1>
+        <h1 class="title">SHADOW ECHO <small>v6.0 // DECLASSIFIED</small></h1>
         <div class="header-right">
             <div class="layers">
                 <span class="lbl">LAYER:</span>
@@ -336,6 +390,7 @@
             <div class="clearance-box">
                 <span class="clearance-label" id="clearanceLabel">CLEARANCE <b>Lv.1</b> · SURFACE</span>
                 <span class="files-label">DOCUMENTS <b><span id="filesNum">0</span>/<span id="filesTotal">0</span></b> RECOVERED</span>
+                <span class="intel-label" id="intelLabel">INTEL <b><span id="intelNum">0</span></b> BANKED</span>
             </div>
             <div class="sanity-box">
                 <span class="sanity-label">SANITY <span id="sanityNum">83</span>%</span>
@@ -606,11 +661,22 @@
       "Someone screenshotted this. You felt it.",
       "Your reflection lagged half a second behind.",
       "The cursor moved before you touched it.",
+      "Your INTEL count changed while you weren't looking. Or did it.",
+      "Someone filed a FOIA request about you today.",
+      "The drone in the audio shifted key. Nobody changed it.",
+      "A node you never placed is exactly where you would have put it.",
     ];
 
     // ---------- STATE ----------
-    const SAVE_KEY = 'shadow-echo-v5';
+    const SAVE_KEY = 'shadow-echo-v6';
+    const META_KEY = 'shadow-echo-meta';     // survives REBOOT — runs, best intel, endings seen
     let sanity = 83;
+    let intel = 0;                           // score currency: recoveries, chains, decrypts, verifications
+    let decrypts = 0;                        // intercepts successfully decoded this run
+    let corruptedId = null;                  // replay tension: one doc node degrades on runs 2+
+    const quizDone = new Set();              // node ids whose VERIFY check was answered
+    let chainLast = null, chainTime = 0, chainCount = 0, chainBest = 0;
+    const meta = { runs: 0, bestIntel: 0, endingsSeen: [] };
     let clearance = 1;                       // 1 SURFACE → 2 DEEP STATE → 3 MYTHIC
     let gameOver = false;
     let endingKey = null;                    // which ending was reached
@@ -637,7 +703,52 @@
       'handler|final':    'PATTERN LOCKED: the channel always terminated here. The Handler was routing you to the last door from the start.',
       'foia|mkultra':     'PATTERN LOCKED: this door opened the legal way — a typed request, a refusal, a release. The record is real.',
       'chemtrails|stlouis':'PATTERN LOCKED: aerosol dispersal over a civilian grid is a documented method, not a theory. Only the scale is disputed.',
+      'foia|stlouis':     'PATTERN LOCKED: the 1994 confirmation only happened because citizens kept filing. The paper beat the program.',
+      'butterfly|presidential':'PATTERN LOCKED: the sigil and the office share a keyer. The trigger phrase is on the public schedule.',
+      'foia|signal':      'PATTERN LOCKED: the unhoused words and the filed request are the same act — forcing the archive open from outside.',
+      'final|mkultra':    'PATTERN LOCKED: every door since 1953 has been this door. You were in the subproject index all along.',
+      'foia|safehouse':   'PATTERN LOCKED: the only real safehouse is the public record. What is filed cannot be quietly burned twice.',
     };
+
+    // ---------- FIELD VERIFICATION (educational quiz layer) ----------
+    // Real facts only — answering teaches the actual record either way.
+    const QUIZ = {
+      stlouis: { q:'The U.S. Army publicly confirmed the St. Louis spraying in…',
+        a:['1955, in a press release','1977, at the MKULTRA hearing','1994, under Congressional pressure'], correct:2,
+        note:'The tests ran 1953-54 and 1963-65; the Army confirmed them only in 1994. A 1997 National Academies review concluded residents were exposed without consent.' },
+      mkultra: { q:'How did the surviving ~20,000 MKULTRA pages escape the 1973 destruction order?',
+        a:['A defecting officer leaked them','They were misfiled in a finance vault','A federal court impounded them'], correct:1,
+        note:'DCI Richard Helms ordered the files destroyed in 1973. Financial records misfiled outside the main archive survived, surfacing via a 1977 FOIA request.' },
+      bluebeam: { q:'Where does "Project Blue Beam" actually originate?',
+        a:['A NASA budget line item','A 1994 pamphlet by a Quebec writer','A 1975 Senate hearing exhibit'], correct:1,
+        note:'The entire Blue Beam narrative traces to Serge Monast’s 1994 pamphlet. No agency record, budget line, or release has ever surfaced. That is what a myth’s paper trail looks like.' },
+      monarch: { q:'What does the public record actually contain for "Project MONARCH"?',
+        a:['A redacted subproject file','A 1973 termination memo','Nothing — no agency record names it'], correct:2,
+        note:'No surviving file names MONARCH. Believers point to the 1973 burn of the subproject index; skeptics point out absence of evidence is not evidence. Both are reading the same hole.' },
+      foia: { q:'How long does a federal agency have to respond to a FOIA request?',
+        a:['20 working days','90 calendar days','No statutory deadline'], correct:0,
+        note:'5 U.S.C. § 552: twenty working days, no reason required from you, burden of proof on the agency. Extensions exist, but the clock is real — and citizens used it to crack everything on this map.' },
+      chemtrails: { q:'Which of these is actually on the books?',
+        a:['A coordinated aerosol "chemtrail" program','Weather-modification activity reporting law (15 U.S.C. § 330)','A smart-dust deployment treaty'], correct:1,
+        note:'Weather modification is real, legal, and must be reported to NOAA under 15 U.S.C. § 330. No release documents a coordinated chemtrail program — only contrail science and cloud-seeding records.' },
+    };
+
+    // ---------- ENCRYPTED INTERCEPTS (cipher minigame) ----------
+    // Caesar/ROT shift puzzles. Plaintexts are the real record.
+    const INTERCEPTS = [
+      { plain:'HELMS ORDERED THE FILES BURNED IN 1973', shift:7,
+        note:'Real: DCI Richard Helms ordered MKULTRA records destroyed in 1973. Roughly 20,000 misfiled pages survived anyway.' },
+      { plain:'THE ARMY CONFIRMED ST LOUIS IN 1994', shift:13,
+        note:'Real: forty years of denial ended under Congressional pressure. The 1997 National Academies review followed.' },
+      { plain:'TWENTY WORKING DAYS TO ANSWER A REQUEST', shift:4,
+        note:'Real: the FOIA clock under 5 U.S.C. § 552. The burden of secrecy is on the agency, not on you.' },
+      { plain:'FRANK OLSON FELL FROM THE THIRTEENTH FLOOR', shift:19,
+        note:'Real: dosed without his knowledge in 1953, dead days later. His family received a White House apology in 1975.' },
+      { plain:'BLUE BEAM TRACES TO ONE 1994 PAMPHLET', shift:9,
+        note:'Real: a single Quebec writer, no agency, no budget line. Follow any claim to its first source — this is how you check.' },
+      { plain:'ONLY THE FINANCE VAULT PAGES SURVIVED', shift:22,
+        note:'Real: the 1977 FOIA release that gave us everything we know about MKULTRA came from accounting records nobody thought to burn.' },
+    ];
 
     // Handler Directives — the mission system.
     // check(): returns true when complete. reward(): one-time payout.
@@ -652,8 +763,19 @@
         reward:()=>{ setSanity(sanity+6); } },
       { id:'m_safehouse', text:'Reach THE SAFEHOUSE and recover your nerve.', rewardText:'sanity relief',
         check:()=> discovered.has('safehouse') },
+      { id:'m_decrypt', text:'Decrypt an encrypted field intercept.', rewardText:'+6 sanity',
+        check:()=> decrypts >= 1,
+        reward:()=>{ setSanity(sanity+6); } },
+      { id:'m_verify', text:'VERIFY 3 dossiers against the real record.', rewardText:'+20 intel',
+        check:()=> quizDone.size >= 3,
+        reward:()=>{ addIntel(20); } },
+      { id:'m_chain', text:'Recover two LINKED documents back-to-back (SIGNAL CHAIN ×2).', rewardText:'+10 intel',
+        check:()=> chainBest >= 2,
+        reward:()=>{ addIntel(10); } },
       { id:'m_files7', text:'Recover 7 documents total — build the full case file.', rewardText:'+ clearance progress',
         check:()=> discovered.size >= 7 },
+      { id:'m_intel100', text:'Bank 100 INTEL. Become worth burning.', rewardText:'the Handler notices',
+        check:()=> intel >= 100 },
       { id:'m_final', text:'Open the FINAL TRANSMISSION. End the operation.', rewardText:'???',
         check:()=> gameOver },
     ];
@@ -672,9 +794,11 @@
       NODES.forEach(n => positions[n.id] = { x: n.x, y: n.y });
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         sanity, clearance, gameOver, endingKey, view, positions,
+        intel, decrypts, corruptedId, chainBest,
         discovered: [...discovered],
         playerConnections,
         completedMissions: [...completedMissions],
+        quizDone: [...quizDone],
       }));
     }
     function load() {
@@ -688,10 +812,60 @@
         if (typeof d.endingKey === 'string') endingKey = d.endingKey;
         if (d.positions) NODES.forEach(n => { if (d.positions[n.id]) { n.x = d.positions[n.id].x; n.y = d.positions[n.id].y; } });
         if (d.view) Object.assign(view, d.view);
+        if (typeof d.intel === 'number') intel = d.intel;
+        if (typeof d.decrypts === 'number') decrypts = d.decrypts;
+        if (typeof d.chainBest === 'number') chainBest = d.chainBest;
+        if (typeof d.corruptedId === 'string') corruptedId = d.corruptedId;
         if (Array.isArray(d.discovered)) d.discovered.forEach(id => discovered.add(id));
         if (Array.isArray(d.playerConnections)) d.playerConnections.forEach(e => playerConnections.push(e));
         if (Array.isArray(d.completedMissions)) d.completedMissions.forEach(id => completedMissions.add(id));
+        if (Array.isArray(d.quizDone)) d.quizDone.forEach(id => quizDone.add(id));
       } catch(e) { /* corrupted leak, ignore */ }
+    }
+    function loadMeta() {
+      try { const m = JSON.parse(localStorage.getItem(META_KEY)); if (m) Object.assign(meta, m); } catch(e) {}
+      if (!Array.isArray(meta.endingsSeen)) meta.endingsSeen = [];
+    }
+    function saveMeta() { localStorage.setItem(META_KEY, JSON.stringify(meta)); }
+
+    // ---------- INTEL ----------
+    function addIntel(amount, why) {
+      intel = Math.max(0, intel + amount);
+      const numEl = document.getElementById('intelNum');
+      numEl.textContent = intel;
+      const lbl = document.getElementById('intelLabel');
+      lbl.classList.remove('intel-flash'); void lbl.offsetWidth; lbl.classList.add('intel-flash');
+      if (why) toast(`+${amount} INTEL — ${why}`);
+      checkMissions();
+      save();
+    }
+
+    // ---------- SIGNAL CHAINS (combo recoveries) ----------
+    function nodesLinked(a, b) {
+      return EDGES.concat(playerConnections).some(e => (e.s===a&&e.t===b) || (e.s===b&&e.t===a));
+    }
+    function registerChain(n) {
+      const now = Date.now();
+      if (chainLast && chainLast !== n.id && nodesLinked(chainLast, n.id) && now - chainTime < 25000) {
+        chainCount++;
+        chainBest = Math.max(chainBest, chainCount);
+        const bonus = 10 * chainCount;
+        setSanity(sanity + 2);
+        addIntel(bonus);
+        chainPop(`SIGNAL CHAIN ×${chainCount}`);
+        toast(`Linked recovery! +${bonus} INTEL, +2 SANITY. Keep following the thread (25s).`);
+        handlerBeep();
+      } else {
+        chainCount = 1;
+      }
+      chainLast = n.id; chainTime = now;
+    }
+    function chainPop(text) {
+      const el = document.createElement('div');
+      el.className = 'chain-pop';
+      el.textContent = text;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1500);
     }
 
     // ---------- SANITY ----------
@@ -746,6 +920,11 @@
       else if (patterns >= 1 || recovered >= 4) endingKey = 'WHISTLEBLOWER';
       else endingKey = 'FORGOTTEN';
 
+      meta.runs++;
+      meta.bestIntel = Math.max(meta.bestIntel, intel);
+      if (!meta.endingsSeen.includes(endingKey)) meta.endingsSeen.push(endingKey);
+      saveMeta();
+
       checkMissions();
       audioPanic();
       showEnding(endingKey);
@@ -771,7 +950,12 @@
             <div>SIGNALS FUSED: <b>${fused}</b></div>
             <div>PATTERNS LOCKED: <b>${patterns}</b></div>
             <div>DIRECTIVES: <b>${completedMissions.size}/${MISSIONS.length}</b></div>
+            <div>INTEL BANKED: <b>${intel}</b></div>
+            <div>INTERCEPTS DECODED: <b>${decrypts}</b></div>
+            <div>RECORDS VERIFIED: <b>${quizDone.size}/${Object.keys(QUIZ).length}</b></div>
+            <div>BEST CHAIN: <b>×${chainBest}</b></div>
           </div>
+          <div class="reveal-tag" style="color:#ffaa33">RUN #${meta.runs} · BEST INTEL ${meta.bestIntel} · ENDINGS SEEN ${meta.endingsSeen.length}/4</div>
           <button class="btn red" style="margin-top:14px;width:100%;text-align:center" onclick="reboot()">▶ RUN OPERATION AGAIN</button>
         </div>`;
       showModal();
@@ -989,8 +1173,9 @@
       // The last door is the endgame, not a dossier.
       if (n.type === 'terminal') { return triggerEndgame('opened'); }
 
-      drainSanity(n.drain);
       const firstTime = !discovered.has(n.id);
+      const corrupted = n.id === corruptedId && firstTime;
+      drainSanity(corrupted ? n.drain * 2 : n.drain);
       if (n.doc) { discovered.add(n.id); }
       maybeParanoia();
       if (n.type === 'recover') {
@@ -999,7 +1184,16 @@
         teletypeBurst(3 + Math.round(Math.abs(n.drain) / 4));
         triggerStaticBurst(Math.min(1.4, Math.abs(n.drain) / 9));
       }
-      if (firstTime) { updateProgress(); checkMissions(); }
+      if (firstTime && n.doc) {
+        addIntel(corrupted ? 20 : 10);
+        if (corrupted) {
+          toast('CORRUPTED DOSSIER RECOVERED. Double drain, double intel. It remembers being burned.');
+          nodeEls[n.id].classList.remove('corrupted');
+          triggerStaticBurst(1.6);
+        }
+        registerChain(n);
+        updateProgress(); checkMissions();
+      }
       if (n.type === 'handler') return openHandler(n);
       if (n.type === 'recover') { toast("Signal dead zone. Sanity recovered."); }
       openDoc(n);
@@ -1145,10 +1339,136 @@
       }).join('');
       modal.innerHTML = `
         <h2>${n.title}</h2>
-        ${lines}
+        <div class="doc-tw" id="docTw">${lines}</div>
+        ${quizBlock(n)}
         ${foiaBlock(n)}
         <button class="btn red" style="margin-top:18px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
       showModal();
+      // typewriter reveal — click the doc body to skip ahead
+      const tw = document.getElementById('docTw');
+      const docLines = tw.querySelectorAll('.doc-line');
+      docLines.forEach((el, i) => setTimeout(() => {
+        if (!el.classList.contains('on')) {
+          el.classList.add('on');
+          if (i % 2 === 0) playTeletypeClick();
+        }
+      }, 70 * i + 120));
+      tw.addEventListener('click', () => docLines.forEach(el => el.classList.add('on')), { once: true });
+    }
+
+    // ---------- FIELD VERIFICATION (quiz) ----------
+    function quizBlock(n) {
+      if (!QUIZ[n.id] || quizDone.has(n.id)) return '';
+      return `<button class="btn" style="margin-top:16px;width:100%;text-align:center;border-color:#006688;color:#00ddff"
+        onclick="openQuiz('${n.id}')">▸ VERIFY THE RECORD — field check (+10 INTEL)</button>`;
+    }
+    function openQuiz(id) {
+      const q = QUIZ[id];
+      if (!q || quizDone.has(id)) return;
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <h2 style="color:#00ddff">FIELD VERIFICATION</h2>
+        <div class="reveal-tag">One question. The real record only. Guessing wrong costs you.</div>
+        <div class="doc-line" style="margin:10px 0">${q.q}</div>
+        <div class="choice-row">
+          ${q.a.map((opt, i) => `<button class="btn" onclick="answerQuiz('${id}',${i})">${opt}</button>`).join('')}
+        </div>`;
+      showModal();
+    }
+    function answerQuiz(id, i) {
+      const q = QUIZ[id];
+      quizDone.add(id);
+      const right = i === q.correct;
+      if (right) { addIntel(10); setSanity(sanity + 4); handlerBeep(); }
+      else { setSanity(sanity - 6); triggerStaticBurst(1.2); }
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <h2 style="color:${right ? '#00ff88' : '#ff3333'}">${right ? '✔ VERIFIED' : '✘ MISFILED'}</h2>
+        <div class="doc-line">${right ? 'Correct. The record holds.' : 'Wrong — the record says: ' + q.a[q.correct]}</div>
+        <div class="doc-line warn" style="color:#00ddaa;margin-top:10px">${q.note}</div>
+        <div class="reveal-tag" style="margin-top:14px;color:${right ? '#00ff88' : '#ff5555'}">
+          ${right ? '+10 INTEL · +4 SANITY' : '−6 SANITY · the truth was checkable'}</div>
+        <button class="btn red" style="margin-top:14px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
+      checkMissions();
+      save();
+    }
+
+    // ---------- ENCRYPTED INTERCEPTS (cipher minigame) ----------
+    function caesar(s, k) {
+      return s.replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0) - 65 + k) % 26 + 26) % 26 + 65));
+    }
+    let interceptQueue = null, activeIntercept = null, trialShift = 0;
+    function maybeIntercept() {
+      if (gameOver || modalOpen()) return;
+      if (!interceptQueue) interceptQueue = [...INTERCEPTS].sort(() => Math.random() - 0.5);
+      if (!interceptQueue.length) return;
+      const chance = 0.20 + discovered.size * 0.02;
+      if (Math.random() > chance) return;
+      activeIntercept = interceptQueue.shift();
+      trialShift = 0;
+      triggerStaticBurst(1);
+      teletypeBurst(10, 0.04);
+      renderIntercept();
+      showModal();
+    }
+    function renderIntercept() {
+      const it = activeIntercept;
+      const decoded = caesar(caesar(it.plain, it.shift), -trialShift);
+      const clean = (trialShift % 26 + 26) % 26 === it.shift;
+      const modal = document.getElementById('modal');
+      modal.innerHTML = `
+        <h2 style="color:#ffaa00">⚠ ENCRYPTED INTERCEPT</h2>
+        <div class="reveal-tag">Rotation cipher detected. Dial the shift until the traffic reads clean, then lock it.</div>
+        <div class="cipher-text ${clean ? 'clean' : ''}">${decoded}</div>
+        <div class="cipher-ctrl">
+          <button class="btn" onclick="dialShift(-1)">◀ −1</button>
+          <span class="rot">ROT ${(trialShift % 26 + 26) % 26}</span>
+          <button class="btn" onclick="dialShift(1)">+1 ▶</button>
+        </div>
+        <div class="choice-row">
+          <button class="btn" onclick="lockShift()">LOCK DECRYPT</button>
+          <button class="btn red" onclick="abandonIntercept()">BURN IT (−6 SANITY)</button>
+        </div>
+        <div class="foia-note" style="display:block;margin-top:14px;font-size:0.95rem">
+          A Caesar (ROT-N) cipher: every letter shifted by the same amount. Julius Caesar used ROT-3;
+          there are only 25 keys, so it falls to patience alone. Real tradecraft moved to one-time pads —
+          which is why the paper that survives matters so much.</div>`;
+    }
+    function dialShift(d) {
+      trialShift += d;
+      playTeletypeClick();
+      renderIntercept();
+    }
+    function lockShift() {
+      const it = activeIntercept;
+      if (!it) return;
+      if ((trialShift % 26 + 26) % 26 === it.shift) {
+        decrypts++;
+        setSanity(sanity + 5);
+        addIntel(20);
+        handlerBeep();
+        const modal = document.getElementById('modal');
+        modal.innerHTML = `
+          <h2 style="color:#00ff88">⊕ TRAFFIC DECRYPTED</h2>
+          <div class="cipher-text clean">${it.plain}</div>
+          <div class="doc-line warn" style="color:#00ddaa">${it.note}</div>
+          <div class="reveal-tag" style="margin-top:14px;color:#00ff88">+20 INTEL · +5 SANITY · ROT ${it.shift} BROKEN</div>
+          <button class="btn red" style="margin-top:14px;width:100%;text-align:center" onclick="closeModal()">CLOSE CHANNEL</button>`;
+        activeIntercept = null;
+        checkMissions();
+        save();
+      } else {
+        setSanity(sanity - 3);
+        triggerStaticBurst(1.3);
+        toast('STILL GIBBERISH. −3 SANITY. Keep dialing.');
+      }
+    }
+    function abandonIntercept() {
+      setSanity(sanity - 6);
+      triggerStaticBurst(1.5);
+      toast('Intercept burned unread. Somewhere, a page you needed turns to ash.');
+      activeIntercept = null;
+      closeModal();
     }
 
     // Render a node's FOIA trail — real declassified links open in a new tab;
@@ -1177,22 +1497,95 @@
         <h2>${n.title}</h2>
         <div id="chatLog"></div>
         <div class="chat-row">
-          <button class="btn" onclick="handlerReply('${n.id}')">TRANSMIT QUERY</button>
+          <input id="handlerInput" placeholder="ask the handler anything..." maxlength="120"
+            onkeydown="if(event.key==='Enter')askHandler('${n.id}')">
+          <button class="btn" onclick="askHandler('${n.id}')">SEND</button>
           <button class="btn red" onclick="closeModal()">CUT LINK</button>
         </div>`;
       showModal();
       addChat('you', '> establishing encrypted channel...');
       setTimeout(() => handlerReply(n.id), 350);
+      setTimeout(() => { const i = document.getElementById('handlerInput'); if (i) i.focus(); }, 400);
     }
     let handlerIdx = 0;
     function handlerReply(id) {
       const n = NODES.find(x => x.id === id);
       const msg = n.chat[handlerIdx % n.chat.length];
       handlerIdx++;
-      addChat('handler', 'HANDLER: ' + msg);
-      handlerBeep();
-      teletypeBurst(Math.min(14, msg.length), 0.045);
+      sayHandler(msg);
+    }
+    function sayHandler(msg, delay = 0) {
+      setTimeout(() => {
+        addChat('handler', 'HANDLER: ' + msg);
+        handlerBeep();
+        teletypeBurst(Math.min(14, msg.length), 0.045);
+      }, delay);
+    }
+    // The Handler "brain" — keyword-reactive, with live state woven in.
+    const HANDLER_BRAIN = [
+      { k: /mkultra|ultra\b|lsd|dosing|olson/i, r: [
+        'MKULTRA is the part they let you read. 149 subprojects, 80 institutions, one finance vault they forgot to burn.',
+        'Frank Olson went out a thirteenth-floor window in 1953. The apology came in 1975. The methods never apologized.',
+        'Helms ordered it all destroyed in ’73. Accountants saved history. Remember that.' ] },
+      { k: /monarch|alter|programming|trauma/i, r: [
+        'Monarch is the part that burned. No file carries the name. You are reading the shape of a hole.',
+        'Ask FOIA about MONARCH and they will tell you, truthfully, that there are no responsive records. Sit with that sentence.',
+        'The subproject index died in 1973. Everything after is testimony and silence.' ] },
+      { k: /blue ?beam|hologram|alien|sky|invasion/i, r: [
+        'Blue Beam traces to one pamphlet, 1994, Quebec. Follow any claim to its first source. Always.',
+        'No budget line. No agency. No release. That is what a myth looks like on paper. And yet you keep watching the sky.' ] },
+      { k: /st\.? ?louis|cadmium|spray|pruitt/i, r: [
+        'They sprayed zinc cadmium sulfide over Pruitt-Igoe and called it smoke screening. Forty years to a confession.',
+        '1994. Congressional pressure. The Army confirmed it. The 1997 review said: exposed without consent. It is all filed.' ] },
+      { k: /foia|request|record|declassif|archive|file/i, r: [
+        'Twenty working days. No reason required from you. The burden of secrecy is on them. File it.',
+        'Everything real on this map came out one typed request at a time. The vault opens from outside.',
+        'foia.gov. The Reading Room. The Black Vault. The doors are heavier than they look — but they are doors.' ] },
+      { k: /who are you|your name|handler\??$|trust you/i, r: [
+        'I am the voice the static makes when you listen too long. Or a desk officer. The difference stopped mattering.',
+        'You opened this channel. I only ever answer. Think about what that means.' ] },
+      { k: /help|what (do|should) i|how do i|stuck|hint/i, r: [
+        () => `You hold ${[...discovered].filter(id=>DOC_NODES.includes(id)).length}/${DOC_NODES.length} dossiers. Recover linked nodes back-to-back — chains pay double.`,
+        'Fuse the signals the record actually supports. MKULTRA to MONARCH. The vault to the dispersal. Noise costs; pattern pays.',
+        'Decrypt the intercepts. Verify the dossiers. Bank the intel. Then decide if you open the last door — or walk.' ] },
+      { k: /sanity|afraid|scared|paranoi|losing/i, r: [
+        'The drain is the design. The Safehouse holds. Go there before the edges start moving.',
+        'Fear is a clearance level. You are being promoted.' ] },
+      { k: /real|true|proof|actually|fact/i, r: [
+        'Some of it is filed under oath. Some of it is a 1994 pamphlet. The skill is telling which — check the FOIA trail on every dossier.',
+        'I will tell you exactly one true thing: the documents with DECLASSIFIED badges are real and public. Start there.' ] },
+      { k: /intel|score|chain|points/i, r: [
+        () => `You have banked ${intel} INTEL. Chains multiply it. The Archivist banked everything.`,
+        'Intel is what survives you. Bank enough and even they will have to read your file.' ] },
+      { k: /final|transmission|end|last door/i, r: [
+        'The last door opens once. What you carry through it decides what you become. Do not knock early.',
+        'Four ways out. Most people find the worst one first.' ] },
+      { k: /hello|^hi\b|hey|good (morning|evening)/i, r: [
+        'No pleasantries on an encrypted line. Ask.',
+        'You came back. They always come back.' ] },
+      { k: /bye|goodbye|cut|leave/i, r: [
+        'Cut the link yourself. The button is right there. See if it helps.' ] },
+    ];
+    const HANDLER_FALLBACK = [
+      'That query is above even my line. Rephrase, or stop pretending you don’t know what to ask.',
+      'Static. Try names: MKULTRA. Monarch. St. Louis. FOIA. The channel responds to the record.',
+      'I heard you. So did they. Choose your next words like they are being filed — they are.',
+      'Unparseable. Or unforgivable. Ask about the documents.',
+    ];
+    function askHandler(id) {
+      const input = document.getElementById('handlerInput');
+      if (!input) return;
+      const text = input.value.trim();
+      input.value = '';
+      if (!text) { handlerReply(id); drainSanity(1); return; }
+      addChat('you', '> ' + text);
       drainSanity(2);
+      const hit = HANDLER_BRAIN.find(b => b.k.test(text));
+      const pool = hit ? hit.r : HANDLER_FALLBACK;
+      let msg = pool[Math.floor(Math.random() * pool.length)];
+      if (typeof msg === 'function') msg = msg();
+      sayHandler(msg, 450 + Math.random() * 600);
+      if (!hit && Math.random() < 0.3) maybeParanoia();
     }
     function addChat(who, text) {
       const logEl = document.getElementById('chatLog');
@@ -1225,12 +1618,17 @@
     function transmit() {
       const report = {
         operation: 'SHADOW ECHO',
-        version: '5.0-declassified',
+        version: '6.0-declassified',
         generated: new Date().toISOString(),
         sanity,
+        intel,
+        interceptsDecoded: decrypts,
+        recordsVerified: `${quizDone.size}/${Object.keys(QUIZ).length}`,
+        bestSignalChain: chainBest,
         clearance: `Lv.${clearance} ${CLEARANCE_NAMES[clearance]}`,
         documentsRecovered: `${[...discovered].filter(id=>DOC_NODES.includes(id)).length}/${DOC_NODES.length}`,
         directivesComplete: `${completedMissions.size}/${MISSIONS.length}`,
+        career: { run: meta.runs + 1, bestIntel: meta.bestIntel, endingsSeen: meta.endingsSeen },
         activeLayers: [...activeLayers],
         nodes: NODES.map(n => ({ id:n.id, layer:n.layer, type:n.type, title:n.title, x:Math.round(n.x), y:Math.round(n.y), recovered: discovered.has(n.id) })),
         connections: EDGES.map(e => `${e.s} -> ${e.t} ${e.label||''}`.trim()),
@@ -1565,6 +1963,15 @@
       { q:'Someone screenshotted this session. You felt the shutter.',
         a:[ { t:'Transmit the field report first.', d:+4, m:'If it leaks, let it leak on your terms.' },
             { t:'Wipe everything.', d:-5, m:'Your hand hovers over REBOOT. You don\'t. You never do.' } ] },
+      { q:'An envelope under the door. Inside: a printout of your own INTEL ledger, annotated in red.',
+        a:[ { t:'Burn it without reading the notes.', d:-3, m:'The smoke smells like toner and certainty. You\'ll wonder forever.' },
+            { t:'Read every annotation.', d:-8, m:'The handwriting is yours. The dates are next week.' } ] },
+      { q:'The FOIA portal shows a request in your name you never filed. Status: GRANTED.',
+        a:[ { t:'Download the release.', d:+7, m:'Three hundred pages. Real ones. Someone upstairs is helping you.' },
+            { t:'Withdraw the request.', d:-6, m:'The withdrawal bounces. "Requester unknown." Then who filed it?' } ] },
+      { q:'Your own voice on the shortwave band, reading numbers. It pauses, waiting.',
+        a:[ { t:'Write the numbers down.', d:-7, m:'They form a ROT cipher. You already know what it decodes to.' },
+            { t:'Kill the radio.', d:+4, m:'Silence. The good kind, for once. You bank the nerve instead.' } ] },
     ];
     function modalOpen() { return document.getElementById('modalBg').classList.contains('show'); }
     function maybeDecision() {
@@ -1598,11 +2005,27 @@
     setInterval(() => { if (sanity > 0 && !gameOver) setSanity(sanity - 1); }, 12000);
     // periodic chance of a forced decision
     setInterval(maybeDecision, 21000);
+    // periodic chance of an encrypted intercept (cipher minigame)
+    setInterval(maybeIntercept, 34000);
 
     // ---------- BOOT ----------
+    loadMeta();
     load();
+    // replay tension: from run 2 onward, one undiscovered dossier is corrupted —
+    // double drain, double intel, magenta flicker. Picked once per run, persisted.
+    if (meta.runs >= 1 && !corruptedId && !gameOver) {
+      const candidates = DOC_NODES.filter(id => {
+        const n = NODES.find(x => x.id === id);
+        return !discovered.has(id) && (n.type === 'doc' || n.type === 'op');
+      });
+      if (candidates.length) corruptedId = candidates[Math.floor(Math.random() * candidates.length)];
+    }
     document.getElementById('filesTotal').textContent = DOC_NODES.length;
+    document.getElementById('intelNum').textContent = intel;
     buildNodes();
+    if (corruptedId && !discovered.has(corruptedId) && nodeEls[corruptedId]) {
+      nodeEls[corruptedId].classList.add('corrupted');
+    }
     renderEdges();
     setSanity(sanity);
     updateProgress();
@@ -1624,6 +2047,8 @@
     setTimeout(() => toast(`CLEARANCE Lv.${clearance} ${CLEARANCE_NAMES[clearance]}. Recover documents to ascend.`), 400);
     setTimeout(() => toast("HANDLER DIRECTIVES uplinked. Check the panel, left."), 1600);
     setTimeout(() => toast("⊕ FUSE two signals to find hidden patterns — but forcing a bad link costs you."), 3000);
+    setTimeout(() => toast("Open LINKED dossiers back-to-back for SIGNAL CHAIN intel bonuses."), 4600);
+    if (meta.runs >= 1) setTimeout(() => toast(`RUN #${meta.runs + 1}. One dossier came back CORRUPTED. Find the magenta flicker.`), 6200);
     </script>
 </body>
 </html>
