@@ -51,6 +51,35 @@ glitch, and creeping paranoia.
 - **Escalating dread** — a sanity-reactive canvas overlay layers static grain, a
   red haze, and shadowy figures creeping in at the edges as you slip. The audio
   bed gains low-sanity *whispers* (band-passed, LFO-wobbled "voice" oscillators).
+- **INTEL economy (v6.0)** — a score currency layered over everything. First-time
+  recoveries, decrypted intercepts, verified records, locked fusion patterns and
+  signal chains all bank INTEL; a persistent HUD counter tracks it, and your best
+  haul survives reboots.
+- **Signal chains (v6.0)** — recover two *connected* dossiers back-to-back
+  (within 25s) and a `SIGNAL CHAIN ×N` multiplier fires: escalating intel bonuses
+  and a sanity kickback for following the thread instead of clicking at random.
+- **Encrypted intercepts (v6.0)** — periodic captured transmissions arrive as
+  Caesar/ROT cipher puzzles. Dial the rotation until the traffic reads clean and
+  lock it for intel + sanity; every plaintext is a *true* line from the record
+  (Helms's 1973 burn order, the 1994 St. Louis confirmation, the FOIA clock…)
+  with a follow-up note — plus a footnote on why ROT-N falls to patience and why
+  real tradecraft moved to one-time pads. Wrong locks and burned intercepts cost.
+- **Field verification (v6.0)** — dossiers with a real public record carry a
+  `▸ VERIFY THE RECORD` check: one factual multiple-choice question (When did the
+  Army confirm St. Louis? How did the MKULTRA pages survive? Where does Blue Beam
+  actually come from?). Right or wrong, you get the sourced answer — the
+  educational layer pays intel for actually reading.
+- **The Handler answers back (v6.0)** — the encrypted channel now has a typed
+  query line. A keyword brain responds in character about MKULTRA, Monarch,
+  Blue Beam, St. Louis, FOIA, your progress, your sanity — with live state woven
+  into hints. Off-record questions get static.
+- **Typewriter dossiers (v6.0)** — documents teletype in line-by-line (click to
+  skip), synced to the audio clicks.
+- **Run meta-progression (v6.0)** — runs, best intel, and endings seen persist
+  *across* reboots. The endgame readout shows your career: `RUN #3 · BEST INTEL
+  240 · ENDINGS SEEN 2/4`.
+- **Corrupted dossiers (v6.0)** — from run 2 onward, one undiscovered file comes
+  back wrong: magenta flicker, double sanity drain, double intel. Replay tension.
 - **Layer toggle** — `SURFACE → DEEP STATE → MYTHIC`. Filter the constellation by reality layer.
 - **TRANSMIT** — export the current map state + connections as a JSON field report.
 - **Signal audio** — toggleable procedural Web Audio bed (low detuned drone +
@@ -94,14 +123,18 @@ that actually have a public record. Fictional programs get `denied`.
 
 ## Roadmap
 
-- Custom node typewriter reveal + per-node scanline overlays
 - Add-node-on-the-fly authoring ("unhoused words" publishing)
 - ~~Audio: teletype + static bed~~ ✓ shipped
 - ~~FOIA trail: real declassified-document links per node~~ ✓ shipped
 - ~~Game loop: clearance progression, fuse-signal connections, handler
   directives, branching endgame, paranoia decisions, dread overlay~~ ✓ shipped (v5.0)
+- ~~Typewriter dossier reveal~~ ✓ shipped (v6.0)
+- ~~Multi-run "corrupted node" replay tension~~ ✓ shipped (v6.0)
+- ~~More fusion patterns~~ ✓ shipped (v6.0 — 16 total)
+- ~~Sticky loop: INTEL economy, signal chains, cipher intercepts, field
+  verification quizzes, conversational Handler, career meta-progression~~ ✓ shipped (v6.0)
 - Audio next: `AnalyserNode`-driven glitch sync, WaveShaper escalation tuning
 - FOIA next: in-modal document preview pane, per-node request-status timeline
-- Game next: more fusion patterns + procedurally-generated nodes from chains,
-  PNG export of field reports, multi-run "corrupted node" replay tension
+- Game next: procedurally-generated nodes from chains, PNG export of field
+  reports, daily intercept rotation, leaderboard via Supabase
 - Next.js + React Flow migration for shared "leaks" via Supabase
